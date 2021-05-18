@@ -6,9 +6,13 @@ a.href = "#";
 a.addEventListener("click", (ev) => {
     ev.preventDefault();
 
-    document.getElementById("mobile_menu_icon").click();
+    document.getElementById("mobile_menu_icon")?.click();
 
     const content = document.getElementById("content");
+    if (!content) {
+        console.error("No #content element");
+        return;
+    }
     content.innerHTML = "";
 
     new App({
@@ -23,4 +27,4 @@ const ul = document.createElement("ul");
 ul.style.marginTop = "20px";
 ul.append(li);
 
-document.querySelector(".mobile_menu").append(ul);
+document.querySelector(".mobile_menu")?.append(ul);

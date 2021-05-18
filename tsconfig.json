@@ -3,8 +3,10 @@
     "compilerOptions": {
         "sourceMap": false,
         "inlineSources": false,
+        "strict": true,
+        "strictFunctionTypes": true
     },
     "rootDir": "src",
     "include": ["src/**/*.ts", "node_modules/@types"],
-    "exclude": ["build/*"]
+    "exclude": ["build/*"],
 }
