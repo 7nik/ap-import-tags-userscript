@@ -1,18 +1,18 @@
 <script lang="ts">
 	import Block from "./Block.svelte";
-	import { value } from "./permMemory.ts";
+	import LocalValue from "./localStorage.js";
 
-	const dbkey = value("dbkey", "dbkey");
-	const snkey = value("snkey", "snkey");
+	const dbkey = new LocalValue("dbkey", "");
+	const snkey = new LocalValue("snkey", "");
 
 </script>
 
 <Block title="New import">
 	Search on: Danbooru <br>
-	Search query: <input type="text" name="query"> <br>
-	Exclude tags: <input type="text" name="except"> <br>
-	Danbooru key: <input type="text" name="dbkey" bind:value={$dbkey}> <br>
-	SauceNAO key: <input type="text" name="snkey" bind:value={$snkey}> <br>
+	Search query: <input type="text" placeholder="Query to search on Danbooru"> <br>
+	Exclude tags: <input type="text" placeholder="Anime-pictures' tags to exlude (optional)"> <br>
+	Danbooru key: <input type="text" placeholder="Danbooru API key (optional)" bind:value={$dbkey}> <br>
+	SauceNAO key: <input type="text" placeholder="SauceNAO API key (optional)" bind:value={$snkey}> <br>
 	<input type="button" value="Start importing">
 </Block>
 

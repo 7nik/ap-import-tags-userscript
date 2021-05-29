@@ -27,4 +27,4 @@ const ul = document.createElement("ul");
 ul.style.marginTop = "20px";
 ul.append(li);
 
-document.querySelector(".mobile_menu")?.append(ul);
+document.getElementById("mobile_menu")?.append(ul);
