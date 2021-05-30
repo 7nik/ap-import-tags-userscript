@@ -5,5 +5,6 @@
 // @description  Allow to import tags from danbooru
 // @author       7nik
 // @match        https://anime-pictures.net/
-// @grant        none
+// @grant        GM.xmlHttpRequest
+// @connect      saucenao.com
 // ==/UserScript==

@@ -4,6 +4,7 @@
         "sourceMap": false,
         "inlineSources": false,
         "strict": true,
+        "strictNullChecks": true,
         "strictFunctionTypes": true
     },
     "rootDir": "src",
