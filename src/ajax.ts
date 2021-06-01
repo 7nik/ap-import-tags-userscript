@@ -105,7 +105,7 @@ type SauceNaoResult = {
     header: {
         similarity: textNumber,
         thumbnail: string, // full link
-        // index_id: number,
+        index_id: number,
         index_name: string,
         dupes: number,
     }
@@ -402,22 +402,17 @@ type SnrFurryNetwork = SauceNaoResult & {
     }
 }
 
-type SauceNaoRunOut = {
-    header: {
-        status: -1|-2,
-        message: string,
-    }
-}
 type SauceNaoError = {
     header: {
-        user_id: textNumber,
-        account_type: textNumber,
-        short_limit: textNumber,
-        long_limit: textNumber,
-        long_remaining: number,
-        short_remaining: number,
-        status: -3,
-        results_requested: number,
+        user_id?: textNumber,
+        account_type?: textNumber,
+        short_limit?: textNumber,
+        long_limit?: textNumber,
+        long_remaining?: number,
+        short_remaining?: number,
+        results_requested?: number,
+        // in case anon error or run out error only these two field presented
+        status: -1, // in fact can be any non-zero value
         message: string, // error message
     }
 }
@@ -493,7 +488,9 @@ async function gmFetch (url: string, params: Params = {}): Promise<Response> {
  */
 async function ajax (url: string, params: Params = {}, useGMXHR = false): Promise<Response> {
     const link = new URL(url);
-    Object.entries(params).forEach(([key, value]) => link.searchParams.append(key, value.toString()));
+    Object.entries(params).forEach(
+        ([key, value]) => link.searchParams.append(key, value.toString())
+    );
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         try {
             return await (useGMXHR ? gmFetch : fetch)(link.toString());
@@ -571,8 +568,8 @@ const Danbooru = {
      * @returns {Promise<number>} Number of posts
      */
     async postCount (tags: string): Promise<number> {
-        const res: DanbooruPostCount = (await danbooru("/counts/posts.json", { tags }) as DanbooruPostCount);
-        return res.counts.posts;
+        const res = (await danbooru("/counts/posts.json", { tags }));
+        return (res as DanbooruPostCount).counts.posts;
     },
     /**
      * Get post infos
@@ -581,7 +578,7 @@ const Danbooru = {
      * @returns {Promise<DanbooruPostInfo[]>} Array of post infos
      */
     findPosts (tags: string, page: number = 1): Promise<DanbooruPostInfo[]> {
-        return danbooru ("/posts.json", { tags, page }) as Promise<DanbooruPostInfo[]>;
+        return danbooru("/posts.json", { tags, page }) as Promise<DanbooruPostInfo[]>;
     },
 }
 
@@ -608,8 +605,8 @@ async function saucenao (params: Params = {}): Promise<SauceNaoResults> {
             return res as SauceNaoResults;
         }
 
-        const { status, short_remaining, long_remaining } = res.header;
-        console.warn("Replanishing:", { status, short_remaining, long_remaining });
+        const { message, status, short_remaining = 0, long_remaining = 0 } = res.header;
+        console.warn("Replanishing:", { message, status, short_remaining, long_remaining });
         await sleep(31000);
     }
     throw new Error("Run out of search attempts");
