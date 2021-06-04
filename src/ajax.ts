@@ -1,6 +1,8 @@
+import type { InteropType } from "rollup";
 import LocalValue from "./localStorage.js";
     
-type Params = { [k:string]: string|number };
+type Params = Record<string, string|number>;
+type SNParams<ID> = Params & { db: ID };
 type textNumber = string; // number presented as string
 type timestamp = string;
 
@@ -35,7 +37,11 @@ type AnimePicturesPostInfo = {
     is_favorites: boolean, // whether you favorited it
     favorite_folder: "", 
     user_favorite_folders: string[],
-};
+}
+
+type APRespType<path> = 
+    path extends `/pictures/view_post/${string}` ? AnimePicturesPostInfo :
+    never;
 
 type DanbooruBadResponse = {
     success: false,
@@ -100,6 +106,11 @@ type DanbooruPostCount = {
         posts: number,
     }
 }
+
+type DBRespType<path> = 
+    path extends "/counts/posts.json" ? DanbooruPostCount :
+    path extends "/posts.json" ? DanbooruPostInfo[] :
+    never;
 
 type SauceNaoResult = {
     header: {
@@ -402,6 +413,48 @@ type SnrFurryNetwork = SauceNaoResult & {
     }
 }
 
+type SnrAll = SnrHMagazines|SnrHGameCG|SnrPixiv|SnrNicoNicoSeiga|SnrDanbooru|
+SnrDrawrImages|SnrNijieImages|SnrYandere|SnrFakku|SnrHMisc|Snr2DMarket|
+SnrMediBand|SnrAnidb|SnrImdb|SnrGelbooru|SnrKonachan|SnrSankakuChan|
+SnrAnimePictures|SnrE621|SnrSankakuIdol|SnrBcy|SnrPortalGraphics|
+SnrDeviantArt|SnrPawoo|SnrMangaUpdates|SnrMangaDex|SnrEHentai|SnrArtStation|
+SnrFurAffinity|SnrTwitter|SnrFurryNetwork;
+
+type SnrRespType<id> = 
+    id extends 0 ? SnrHMagazines :
+    id extends 2 ? SnrHGameCG :
+    id extends 5|6|51|52|53 ? SnrPixiv :
+    id extends 8 ? SnrNicoNicoSeiga : 
+    id extends 9 ? SnrDanbooru :
+    id extends 10 ? SnrDrawrImages :
+    id extends 11 ? SnrNijieImages : 
+    id extends 12 ? SnrYandere :
+    id extends 16 ? SnrFakku :
+    id extends 18 ? SnrHMisc :
+    id extends 19 ? Snr2DMarket :
+    id extends 20 ? SnrMediBand :
+    id extends 21|211|22 ? SnrAnidb :
+    id extends 23|24 ? SnrImdb :
+    id extends 25 ? SnrGelbooru :
+    id extends 26 ? SnrKonachan :
+    id extends 27 ? SnrSankakuChan :
+    id extends 28 ? SnrAnimePictures :
+    id extends 29 ? SnrE621 :
+    id extends 30 ? SnrSankakuIdol :
+    id extends 31|32 ? SnrBcy :
+    id extends 33 ? SnrPortalGraphics :
+    id extends 34|341 ? SnrDeviantArt :
+    id extends 35 ? SnrPawoo :
+    id extends 36 ? SnrMangaUpdates :
+    id extends 37 ? SnrMangaDex :
+    id extends 38 ? SnrEHentai :
+    id extends 39 ? SnrArtStation :
+    id extends 40 ? SnrFurAffinity :
+    id extends 41 ? SnrTwitter :
+    id extends 42 ? SnrFurryNetwork :
+    id extends 999 ? SnrAll :
+    never;
+
 type SauceNaoError = {
     header: {
         user_id?: textNumber,
@@ -416,7 +469,8 @@ type SauceNaoError = {
         message: string, // error message
     }
 }
-type SauceNaoResults = {
+
+type SauceNaoResults<dbID extends number> = {
     header: {
         user_id: textNumber,
         account_type: textNumber,
@@ -425,14 +479,12 @@ type SauceNaoResults = {
         long_remaining: number,
         short_remaining: number,
         status: 0,
-        index: {
-            [k:string]: {
-                status: number,
-                id: number,
-                parent_id: number,
-                results: number,
-            }
-        }
+        index: Record<string, {
+            status: number,
+            id: number,
+            parent_id: number,
+            results: number,
+        }>,
         search_depth: textNumber,
         minimum_similarity: number,
         query_image_display: string, // relative link to the searched image
@@ -440,12 +492,7 @@ type SauceNaoResults = {
         results_requested: number,
         results_returned: number,
     }
-    results: (SnrHMagazines|SnrHGameCG|SnrPixiv|SnrNicoNicoSeiga|SnrDanbooru|
-        SnrDrawrImages|SnrNijieImages|SnrYandere|SnrFakku|SnrHMisc|Snr2DMarket|
-        SnrMediBand|SnrAnidb|SnrImdb|SnrGelbooru|SnrKonachan|SnrSankakuChan|
-        SnrAnimePictures|SnrE621|SnrSankakuIdol|SnrBcy|SnrPortalGraphics|
-        SnrDeviantArt|SnrPawoo|SnrMangaUpdates|SnrMangaDex|SnrEHentai|SnrArtStation|
-        SnrFurAffinity|SnrTwitter|SnrFurryNetwork)[],
+    results: SnrRespType<dbID>[],
 }
 
 const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time));
@@ -505,12 +552,13 @@ async function ajax (url: string, params: Params = {}, useGMXHR = false): Promis
 
 /**
  * Do a request to Anime-Pictures.net
- * @param {string} path - Relative link to request 
+ * @param {string} path - Constant part of relative link to the request 
+ * @param {number|string} page - Variable part of relative link to the request 
  * @param {Params} [params={}] - Request params 
  * @returns {Promise<object>} Parsed server response
  */
-async function animepictures<Resp extends object> (path: string, params: Params = {}): Promise<Resp> {
-    const resp = await ajax(`https://anime-pictures.net${path}`, {
+async function animepictures<Path extends string> (path: Path, page: number|string, params: Params = {}): Promise<APRespType<Path>> {
+    const resp = await ajax(`https://anime-pictures.net${path}${page}`, {
         lang: "en",
         type: "json",
         ...params,
@@ -526,7 +574,7 @@ const AnimePictures = {
      * @returns {Promise<AnimePicturesPostInfo>} Post info
      */
     getPostInfo (postId: number|string): Promise<AnimePicturesPostInfo> {
-        return animepictures<AnimePicturesPostInfo>(`/pictures/view_post/${postId}`);
+        return animepictures("/pictures/view_post/", postId);
     },
 };
 
@@ -540,12 +588,12 @@ new LocalValue("dbkey", "").subscribe((key) => {
  * @param {Params} [params={}] - Request params 
  * @returns {Promise<object>} Parsed server response
  */
-async function danbooru<Resp extends object> (path: string, params: Params = {}): Promise<Resp> {
+async function danbooru<Path extends string> (path: Path, params: Params = {}): Promise<DBRespType<Path>> {
     if (dblogin) {
         params.login = dblogin;
         params.api_key = dbapikey;
     }
-    let res: DanbooruBadResponse | Resp;
+    let res: DanbooruBadResponse | DBRespType<Path>;
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         res = await ajax(`https://danbooru.donmai.us${path}`, params)
             .then(resp => resp.json());
@@ -568,7 +616,7 @@ const Danbooru = {
      * @returns {Promise<number>} Number of posts
      */
     async postCount (tags: string): Promise<number> {
-        return (await danbooru<DanbooruPostCount>("/counts/posts.json", { tags })).counts.posts;
+        return (await danbooru("/counts/posts.json", { tags })).counts.posts;
     },
     /**
      * Get post infos
@@ -577,7 +625,7 @@ const Danbooru = {
      * @returns {Promise<DanbooruPostInfo[]>} Array of post infos
      */
     findPosts (tags: string, page: number = 1): Promise<DanbooruPostInfo[]> {
-        return danbooru<DanbooruPostInfo[]>("/posts.json", { tags, page });
+        return danbooru("/posts.json", { tags, page });
     },
 };
 
@@ -590,8 +638,8 @@ new LocalValue("snkey", "").subscribe((key) => {
  * @param {Params} params - Params of the search (url, numres, db, dbmask, dbmaski, dedupe) 
  * @returns {Promise<SauceNaoResults} Found pictures
  */
-async function saucenao (params: Params = {}): Promise<SauceNaoResults> {
-    let res: SauceNaoError | SauceNaoResults;
+async function saucenao<dbID extends number> (params: SNParams<dbID>): Promise<SauceNaoResults<dbID>> {
+    let res: SauceNaoError | SauceNaoResults<dbID>;
     for (let i = 0; i < 5; i++) {
         res = await ajax("https://saucenao.com/search.php", {
             output_type: 2,
@@ -599,9 +647,9 @@ async function saucenao (params: Params = {}): Promise<SauceNaoResults> {
             ...params,
         }, true).then(resp => resp.json());
 
-        if (res.header.status === 0) {
+        if ("results" in res) {
             await sleep(res.header.short_remaining > 3 ? 1400 : 10000);
-            return res as SauceNaoResults;
+            return res;
         }
 
         const { message, status, short_remaining = 0, long_remaining = 0 } = res.header;
@@ -619,14 +667,14 @@ const SauceNAO = {
      */
     async findClosestOnAnimePictures (url: string): Promise<SnrAnimePictures> {
         const res = await saucenao({ url, db: 28, numres: 1 });
-        return res.results[0] as SnrAnimePictures;
+        return res.results[0];
     },
     /**
      * Get number of avaivable daily attempts to search (cost 1 attempt)
      * @returns {Promse<number>} Number of remaining daily attempts
      */
     async availableAttempts (): Promise<number> {
-        return (await saucenao({ url: "https://saucenao.com/images/static/banner_large.gif" }))
+        return (await saucenao({ db: 999, url: "https://saucenao.com/images/static/banner_large.gif" }))
             .header.long_remaining;
     },
 };
