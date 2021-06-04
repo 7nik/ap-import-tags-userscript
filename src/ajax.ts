@@ -38,7 +38,7 @@ type AnimePicturesPostInfo = {
 };
 
 type DanbooruBadResponse = {
-    success: boolean,
+    success: false,
     message: string,
     backtrace: string[],
 }
@@ -501,7 +501,7 @@ async function ajax (url: string, params: Params = {}, useGMXHR = false): Promis
     }
     // do not mute exception at the last attempt
     return await (useGMXHR ? gmFetch : fetch)(link.toString());
-};
+}
 
 /**
  * Do a request to Anime-Pictures.net
@@ -509,7 +509,7 @@ async function ajax (url: string, params: Params = {}, useGMXHR = false): Promis
  * @param {Params} [params={}] - Request params 
  * @returns {Promise<object>} Parsed server response
  */
-async function animepictures (path: string, params: Params = {}): Promise<object> {
+async function animepictures<Resp extends object> (path: string, params: Params = {}): Promise<Resp> {
     const resp = await ajax(`https://anime-pictures.net${path}`, {
         lang: "en",
         type: "json",
@@ -517,7 +517,7 @@ async function animepictures (path: string, params: Params = {}): Promise<object
     });
     if (!resp.ok) throw resp;
     return resp.json();
-};
+}
 
 const AnimePictures = {
     /**
@@ -526,9 +526,9 @@ const AnimePictures = {
      * @returns {Promise<AnimePicturesPostInfo>} Post info
      */
     getPostInfo (postId: number|string): Promise<AnimePicturesPostInfo> {
-        return animepictures(`/pictures/view_post/${postId}`) as Promise<AnimePicturesPostInfo>;
+        return animepictures<AnimePicturesPostInfo>(`/pictures/view_post/${postId}`);
     },
-}
+};
 
 let dblogin: string, dbapikey: string;
 new LocalValue("dbkey", "").subscribe((key) => {
@@ -540,26 +540,26 @@ new LocalValue("dbkey", "").subscribe((key) => {
  * @param {Params} [params={}] - Request params 
  * @returns {Promise<object>} Parsed server response
  */
-async function danbooru (path: string, params: Params = {}): Promise<object> {
+async function danbooru<Resp extends object> (path: string, params: Params = {}): Promise<Resp> {
     if (dblogin) {
         params.login = dblogin;
         params.api_key = dbapikey;
     }
-    let res: DanbooruBadResponse;
+    let res: DanbooruBadResponse | Resp;
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         res = await ajax(`https://danbooru.donmai.us${path}`, params)
             .then(resp => resp.json());
 
-        if (res.success || !("success" in res)) return res;
+        if (!("success" in res)) return res;
 
         console.warn(path, params, res.message, `${nth} attempt`);
         await sleep(5000);
     }
     res = await ajax(`https://danbooru.donmai.us${path}`, params)
         .then(resp => resp.json());
-    if (res.success || !("success" in res)) return res;
+    if (!("success" in res)) return res;
     throw new Error(res?.message);
-};
+}
 
 const Danbooru = {
     /**
@@ -568,19 +568,18 @@ const Danbooru = {
      * @returns {Promise<number>} Number of posts
      */
     async postCount (tags: string): Promise<number> {
-        const res = (await danbooru("/counts/posts.json", { tags }));
-        return (res as DanbooruPostCount).counts.posts;
+        return (await danbooru<DanbooruPostCount>("/counts/posts.json", { tags })).counts.posts;
     },
     /**
      * Get post infos
      * @param {string} tags - Query to search the posts
-     * @param {number} page - Page of results  
+     * @param {number} page - Page number of results  
      * @returns {Promise<DanbooruPostInfo[]>} Array of post infos
      */
     findPosts (tags: string, page: number = 1): Promise<DanbooruPostInfo[]> {
-        return danbooru("/posts.json", { tags, page }) as Promise<DanbooruPostInfo[]>;
+        return danbooru<DanbooruPostInfo[]>("/posts.json", { tags, page });
     },
-}
+};
 
 let snapikey: string;
 new LocalValue("snkey", "").subscribe((key) => {
@@ -610,7 +609,7 @@ async function saucenao (params: Params = {}): Promise<SauceNaoResults> {
         await sleep(31000);
     }
     throw new Error("Run out of search attempts");
-};
+}
 
 const SauceNAO = {
     /**
