@@ -11,7 +11,7 @@ type AnimePicturesPostInfo = {
     md5: string,
     md5_pixels: string,
     width: number,
-    heiht: number,
+    height: number,
     small_preview: string, // 150px bigger side
     medium_preview: string, // 300px bigger side
     big_preview: string, // 600px bigger side

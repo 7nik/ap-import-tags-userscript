@@ -56,7 +56,7 @@
 <Block title="Previous imports">
     {#each searches as search}
         <div>
-            <a href="#res/{search.date}">{search.query}</a>
+            <a href="#/res/{search.date}/0">{search.query}</a>
             <span class="icon_delete" on:click={() => deleteResult(search)} />
             <br>
             {search.count} found pictures {new Date(search.date).toLocaleString()},

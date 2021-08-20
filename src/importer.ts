@@ -38,7 +38,7 @@ type SavedResult = {
     date: number,
     count: number,
 }
-export type { State, SavedResult };
+export type { State, Result, SavedResult };
 
 /**
  * Class to take pics on Danbooru and find the most similar on Anime-pictures user SauceNAO
@@ -89,12 +89,13 @@ export default class Importer {
             if (!post) {
                 // it was the last page so save the results
                 this.results.sort((a, b) => +b.sim - +a.sim);
-                new LocalValue(`res_${Date.now()}`, {}).set({
+                const res = {
                     query: decodeURIComponent(this.query),
                     results: this.results,
                     date: Date.now(),
                     count: this.results.length,
-                });
+                };
+                new LocalValue(`res_${res.date}`, {}).set(res);
                 this.stateObj.paused = true;
                 this.stateObj.finished = true;
                 this.saveState();
@@ -113,9 +114,9 @@ export default class Importer {
                         sim:    simRes.header.similarity,
                         id:     simRes.data['anime-pictures_id'],
                         link:   simRes.data.ext_urls[0],
-                        preview:    apPost.small_preview,
+                        preview:    apPost.medium_preview,
                         width:      apPost.width,
-                        height:     apPost.heiht,
+                        height:     apPost.height,
                         erotics:    apPost.erotics,
                         color:      apPost.color,
                         status:     apPost.status,
