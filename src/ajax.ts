@@ -648,7 +648,9 @@ async function saucenao<dbID extends number> (params: SNParams<dbID>): Promise<S
         }, true).then(resp => resp.json());
 
         if ("results" in res) {
-            await sleep(res.header.short_remaining > 3 ? 1400 : 10000);
+            if (res.header.short_remaining < 10) {
+                await sleep(res.header.short_remaining > 3 ? 1400 : 10000);
+            }
             return res;
         }
 
@@ -680,3 +682,4 @@ const SauceNAO = {
 };
 
 export { AnimePictures, Danbooru, SauceNAO };
+export type { AnimePicturesPostInfo, DanbooruPostInfo, SnrAnimePictures };
