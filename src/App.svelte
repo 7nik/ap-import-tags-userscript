@@ -5,10 +5,10 @@
 	import ViewResult from "./ViewResult.svelte";
 
 	const routes = {
-		"*": HomePage,
 		"/home": HomePage,
 		"/import/:query": ImportPage,
 		"/res/:name/:page": ViewResult,
+		"*": HomePage,
 	};
 </script>
 
