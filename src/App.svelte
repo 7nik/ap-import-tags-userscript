@@ -5,7 +5,7 @@
 	import ViewResult from "./ViewResult.svelte";
 
 	const routes = {
-		"/": HomePage,
+		"*": HomePage,
 		"/home": HomePage,
 		"/import/:query": ImportPage,
 		"/res/:name/:page": ViewResult,

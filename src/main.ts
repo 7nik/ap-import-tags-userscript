@@ -5,19 +5,8 @@ a.innerText = "Import tags";
 a.href = "#";
 a.addEventListener("click", (ev) => {
     ev.preventDefault();
-
     document.getElementById("mobile_menu_icon")?.click();
-
-    const content = document.getElementById("content");
-    if (!content) {
-        console.error("No #content element");
-        return;
-    }
-    content.innerHTML = "";
-
-    new App({
-    	target: content,
-    });
+    startApp();
 });
 
 const li = document.createElement("li");
@@ -28,3 +17,20 @@ ul.style.marginTop = "20px";
 ul.append(li);
 
 document.getElementById("mobile_menu")?.append(ul);
+
+if (window.location.hash) {
+    startApp();
+}
+
+function startApp () {
+    const content = document.getElementById("content");
+    if (!content) {
+        console.error("No #content element");
+        return;
+    }
+    content.innerHTML = "";
+
+    new App({
+    	target: content,
+    });
+}
