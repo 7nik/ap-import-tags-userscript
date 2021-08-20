@@ -1,14 +1,20 @@
 <script lang="ts">
-import type { SavedResult } from "./importer";
-import LocalValue from "./localStorage";
+import type { Result, SavedResult } from "./importer";
 import PageNavigator from "./PageNavigator.svelte";
+import { writable } from "svelte/store";
+import LocalValue from "./localStorage";
 import Post from "./Post.svelte";
 
     export let params = { name: "", page: 0 };
 
+    const currPage = writable(+params.page);
     const result = new LocalValue(`res_${params.name}`, {} as SavedResult);
-    const posts = $result.results.slice(params.page*100, (+params.page+1)*100);
     const pageCount = Math.ceil($result.results.length/100);
+    const baseUrl = `#/res/${$result.date}/`;
+    let posts: Result[];
+    $: {
+       posts = $result.results.slice($currPage*100, ($currPage+1)*100);
+    }
 </script>
 
 <div id="posts">
@@ -16,13 +22,13 @@ import Post from "./Post.svelte";
         <div class="header">
             Search results: {$result.results.length} pictures
         </div>
-        <PageNavigator baseUrl="#/res/{$result.date}/" currPage={params.page} {pageCount} />
+        <PageNavigator {baseUrl} {currPage} {pageCount} />
         <div class="cetner posts_block">
             {#each posts as post}
                 <Post {post} />
             {/each}
         </div>
-        <PageNavigator baseUrl="#/res/{$result.date}/" currPage={params.page} {pageCount} />
+        <PageNavigator {baseUrl} {currPage} {pageCount} />
     </div>
 </div>
 
