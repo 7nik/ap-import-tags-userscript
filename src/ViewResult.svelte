@@ -3,7 +3,7 @@ import type { Result, SavedResult } from "./importer";
 import PageNavigator from "./PageNavigator.svelte";
 import { writable } from "svelte/store";
 import LocalValue from "./localStorage";
-import Post from "./Post.svelte";
+import SimilarityPost from "./SimilarityPost.svelte";
 
     export let params = { name: "", page: 0 };
 
@@ -17,6 +17,7 @@ import Post from "./Post.svelte";
     }
 </script>
 
+<a href="#/home">&lt; Back</a>
 <div id="posts">
     <div class="center">
         <div class="header">
@@ -25,7 +26,7 @@ import Post from "./Post.svelte";
         <PageNavigator {baseUrl} {currPage} {pageCount} />
         <div class="cetner posts_block">
             {#each posts as post}
-                <Post {post} />
+                <SimilarityPost {post} />
             {/each}
         </div>
         <PageNavigator {baseUrl} {currPage} {pageCount} />
@@ -34,7 +35,7 @@ import Post from "./Post.svelte";
 
 <style>
     #posts {
-        margin-top: 15px;
+        margin-top: -4px;
     }
     .center {
         text-align: center;

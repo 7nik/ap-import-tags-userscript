@@ -68,9 +68,9 @@ type DanbooruPostInfo = {
     fav_count: number,
     file_ext?: string, // same
     file_size: number,
-    file_url?: string, // full, same case as with id
-    large_file_url?: string, // same
-    preview_file_url?: string, // same
+    file_url?: string, // full link to original; same case as with id
+    large_file_url?: string, // 850px width or original; same
+    preview_file_url?: string, // 150px biggest side; same
     parent_id: number|null,
     has_children: boolean,
     has_active_children: boolean,

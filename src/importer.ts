@@ -104,13 +104,13 @@ export default class Importer {
         }
 
         try {
-            if (post.preview_file_url) {
-                const simRes = await SauceNAO.findClosestOnAnimePictures(post.preview_file_url);
+            if (post.large_file_url) {
+                const simRes = await SauceNAO.findClosestOnAnimePictures(post.large_file_url);
                 const apPost = await AnimePictures.getPostInfo(simRes.data['anime-pictures_id']);
                 if (!this.results.find(({ id }) => id === apPost.id)) {
                     this.results.push({
                         dbLink: `https://danbooru.donmai.us/posts/${post.id}`,
-                        dbImg:  post.preview_file_url,
+                        dbImg:  post.large_file_url,
                         sim:    simRes.header.similarity,
                         id:     simRes.data['anime-pictures_id'],
                         link:   simRes.data.ext_urls[0],
