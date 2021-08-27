@@ -32,13 +32,15 @@
         ? ["none", "#F0F", "#F90", "#F00"][post.erotics]
         : "none";
     const textColor = post.color.reduce((s,a)=>s+a) > 128*3 ? "black" : "white";
-    const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.status]
+    const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.status];
+    // @ts-ignore
+    const lang = window.lang || "en";
 </script>
 
 <span class="post {postClass}">
     <div class="img_block_text" style="
         opacity: 1;
-        background-image: linear-gradient(to right, rgba({post.color},0), rgba({post.color},1), rgba({post.color},0));
+        background-image: linear-gradient(to right, transparent, rgb({post.color}), transparent);
         color: {textColor};"
     > 
         <a href="/pictures/view_posts/0?res_x={post.width}&amp;res_y={post.height}&amp;lang=en" 
@@ -53,26 +55,30 @@
         <br hidden={!!status}>
         {status}
     </div>
-    <div class="db_link">
-        <a href={post.dbLink} title="Danbooru post" target="_blank">
-            <img class="db_img {imgClass}"
-                src="{dbImg}"
-                alt="Danbooru preview"
-            >
-        </a>
-    </div>
-    <div class="ap_link">
-        <a  href="/pictures/view_post/{post.id}?lang=en" 
-            title="Anime picture {post.width}x{post.height}" 
-            target="_blank"
-        >
-            <img class="ap_img {imgClass}" 
-                src="{imgLink}" 
-                alt="Anime picture #{post.id}"
-            >
-        </a>
-
-    </div>
+    <a class="db_link" 
+        href={post.dbLink} 
+        title="Danbooru post" 
+        target="_blank"
+    >
+        <div class="frame">
+            <div class="container" >
+                <!-- svelte-ignore a11y-missing-attribute -->
+                <img class="db_img {imgClass}" src="{dbImg}" />
+            </div>
+        </div>
+    </a>
+    <a class="ap_link" 
+        href="/pictures/view_post/{post.id}?lang={lang || "en"}" 
+        title="Anime picture {post.width}x{post.height}" 
+        target="_blank"
+    >
+        <div class="frame">
+            <div class="container">
+                <!-- svelte-ignore a11y-missing-attribute -->
+                <img class="ap_img {imgClass}" src="{imgLink}" />
+            </div>
+        </div>
+    </a>
 </span>
 
 <style>
@@ -91,35 +97,51 @@
         position: relative;
     }
     .db_link, .ap_link {
+        display: block;
         position: absolute;
         width: 50%;
         height: 100%;
-        overflow: hidden;
     }
     .ap_link {
         left: 50%;
     }
-    .db_link a, .ap_link a {
+    .frame {
+        height: 100%;
+        width: 100%;
+        transition: width 1s;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .ap_link .frame {
+        position: absolute;
+        right: 0;
+    }
+    .ap_link .container {
+        position: absolute;
+        right: 0;
+    }
+    .img_block2 .container {
         display: inline-block;
+        width: 150px;
+    }
+    .img_block_big .container {
+        display: inline-block;
+        width: 300px;
+    }
+    .img_block2.huge .container {
+        display: inline-block;
+        width: 500px;
+    }
+    .db_link:hover .frame {
         width: 200%;
     }
-    .ap_link a {
-        position: relative;
-        left: -100%;
+    .db_link:hover + .ap_link .frame {
+        width: 0;
     }
-    .db_link:hover {
-        overflow: visible;
+    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) .frame {
+        width: 0;
     }
-    .db_link:hover + .ap_link a {
-        display: none;
-    }
-    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) + .ap_link {
-        overflow: visible;
-    }
-    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) {
-        z-index: 2;
-    }
-    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) a {
-        display: none;
+    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) + .ap_link .frame {
+        width: 200%;
     }
 </style>
