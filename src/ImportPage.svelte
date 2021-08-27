@@ -19,11 +19,15 @@
 	async function toggle () {
 		if ($state.paused) {
 			// if couldn't resume due to low number of available attempts
-			if (!await importer.resume()) {
-				const { availableAttempts: av, requiredAttempts: req } = $state;
-				if (confirm(`There are no enough available search attempts on SauceNAO: only ${av} of ${req}, continue?`)) {
-					importer.resume(true);
+			try {
+				if (!await importer.resume()) {
+					const { availableAttempts: av, requiredAttempts: req } = $state;
+					if (confirm(`There are no enough available search attempts on SauceNAO: only ${av} of ${req}, continue?`)) {
+						importer.resume(true);
+					}
 				}
+			} catch (ex) {
+				console.error(ex);
 			}
 		} else {
 			importer.pause();
@@ -49,8 +53,10 @@
 <svelte:window on:beforeunload={onleave} />
 <Block title="Importing tags">
 	{#if $state.error}
-		<span color="red">{$state.error}</span>
+		<span class="red">Error: {$state.error}</span>
+		<br>
 	{/if}
+	<span>{$state.status}</span>
     <progress max="100" value={$state.progress} />
     <center>
         <input 
@@ -68,5 +74,8 @@
 <style>
 	progress {
 		width: 100%;
+	}
+	.red {
+		color: red;
 	}
 </style>

@@ -16,6 +16,7 @@ type State = {
     requiredAttempts: number,
     availableAttempts: number,
     error: string;
+    status: string;
 };
 type Result = {
     dbLink: string,
@@ -56,6 +57,7 @@ export default class Importer {
         paused: true,
         finished: false,
         error: "",
+        status: "initialization",
         requiredAttempts: 0,
         availableAttempts: 0,
     };
@@ -104,8 +106,10 @@ export default class Importer {
         }
 
         try {
+            this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post #${post.id}`;
             if (post.large_file_url) {
-                const simRes = await SauceNAO.findClosestOnAnimePictures(post.large_file_url);
+                // @ts-ignore - sometimes SauceNAO fails with post.large_file_url
+                const simRes = await SauceNAO.findClosestOnAnimePictures(post.preview_file_url);
                 const apPost = await AnimePictures.getPostInfo(simRes.data['anime-pictures_id']);
                 if (!this.results.find(({ id }) => id === apPost.id)) {
                     this.results.push({
@@ -173,8 +177,14 @@ export default class Importer {
     async resume (force: boolean = false): Promise<boolean> {
         if (!force) {
             // check whether there are enough search attempts to find all the post
-            this.stateObj.availableAttempts = await SauceNAO.availableAttempts();
-            this.stateObj.requiredAttempts = await Danbooru.postCount(this.query);
+            try {
+                this.stateObj.availableAttempts = await SauceNAO.availableAttempts();
+                this.stateObj.requiredAttempts = await Danbooru.postCount(this.query);
+            } catch (ex) {
+                this.stateObj.error = ex.message;
+                this.saveState();
+                throw ex;
+            }
             if (this.stateObj.availableAttempts / (this.stateObj.requiredAttempts - this.done) < 0.99) {
                 return false;
             }
