@@ -67,7 +67,7 @@
             {post.width}x{post.height}
         </a>
         <span title="Tags Num">({post.tagsCount})</span>
-        {Math.round(+post.sim)}%
+        <span title="Similarity">{Math.round(+post.sim)}%</span>
         <br hidden={!!status}>
         {status}
     </div>
@@ -78,7 +78,7 @@
     > </a>
     <a class="ap_link" 
         href="/pictures/view_post/{post.id}?lang={lang || "en"}" 
-        title="Anime picture {post.width}x{post.height}" 
+        title="Anime pictures post" 
         target="_blank"
     > </a>
     <div class="db_img">
@@ -152,11 +152,13 @@
     }
     .db_link:hover ~ .ap_img {
         width: 0;
+        transition-duration: 1.05s;
     }
     .ap_link:hover ~ .ap_img {
         width: 100%;
     }
     .ap_link:hover ~ .db_img {
         width: 0;
+        transition-duration: 1.05s;
     }
 </style>
