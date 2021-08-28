@@ -35,7 +35,7 @@
         <span>Danbooru key:</span>
         <input 
             type="text" 
-            placeholder="Danbooru login, space, API key (optional)" 
+            placeholder="Danbooru login, space, API key (desired)" 
             bind:value={$dbkey}
             pattern=".+ \w{"{24}"}"
         />

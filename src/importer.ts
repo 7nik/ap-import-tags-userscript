@@ -15,7 +15,7 @@ type State = {
     finished: boolean,
     requiredAttempts: number,
     availableAttempts: number,
-    error: string;
+    error: string | null;
     status: string;
 };
 type Result = {
@@ -56,7 +56,7 @@ export default class Importer {
         progress: 0,
         paused: true,
         finished: false,
-        error: "",
+        error: null,
         status: "initialization",
         requiredAttempts: 0,
         availableAttempts: 0,
@@ -106,7 +106,7 @@ export default class Importer {
         }
 
         try {
-            this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post #${post.id}`;
+            this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post №${post.id}`;
             if (post.large_file_url) {
                 // @ts-ignore - sometimes SauceNAO fails with post.large_file_url
                 const simRes = await SauceNAO.findClosestOnAnimePictures(post.preview_file_url);
@@ -150,7 +150,7 @@ export default class Importer {
                 }
             }
         } catch (ex) {
-            console.error(ex);
+            console.error(post, ex);
             this.stateObj.error = ex.message;
             this.stateObj.paused = true;
         }
@@ -197,7 +197,7 @@ export default class Importer {
             // was completely paused
             if (this.stateObj.paused) {
                 this.stateObj.paused = false;
-                this.stateObj.error = "";
+                this.stateObj.error = null;
                 this.saveState();
                 this.iterate();
             }

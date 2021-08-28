@@ -52,7 +52,7 @@
 
 <svelte:window on:beforeunload={onleave} />
 <Block title="Importing tags">
-	{#if $state.error}
+	{#if $state.error !== null}
 		<span class="red">Error: {$state.error}</span>
 		<br>
 	{/if}

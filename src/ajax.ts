@@ -495,6 +495,8 @@ type SauceNaoResults<dbID extends number> = {
     results: SnrRespType<dbID>[],
 }
 
+type FetchFunc = (url: string, params: RequestInit) => Promise<Response>;
+
 const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time));
 
 /**
@@ -503,7 +505,7 @@ const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, tim
  * @param {Params} params - Other params of the function 
  * @returns {Promise<Response>} Response object of the same type as fetch's
  */
-async function gmFetch (url: string, params: Params = {}): Promise<Response> {
+async function gmFetch (url: string, params: RequestInit = {}): Promise<Response> {
     let resolveResp, rejectResp;
     const respPromise: Promise<GM.Response<any>> = new Promise((res, rej) => {
         resolveResp = res; 
@@ -533,21 +535,33 @@ async function gmFetch (url: string, params: Params = {}): Promise<Response> {
  * @param {Params} [params={}] - Get-params of the request 
  * @returns {Promise<Response>} Raw server response
  */
-async function ajax (url: string, params: Params = {}, useGMXHR = false): Promise<Response> {
+async function query (fetch: FetchFunc, url: string, params: RequestInit = {}): Promise<Response> {
     const link = new URL(url);
     Object.entries(params).forEach(
         ([key, value]) => link.searchParams.append(key, value.toString())
     );
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         try {
-            return await (useGMXHR ? gmFetch : fetch)(link.toString());
+            return await fetch(link.toString(), params);
         } catch (ex) {
             console.warn(ex, link.href, `\nFetch error. ${nth} attempt`);
             await sleep(5000);
         }
     }
     // do not mute exception at the last attempt
-    return await (useGMXHR ? gmFetch : fetch)(link.toString());
+    return await fetch(link.toString(), params);
+}
+
+async function get (url: string, params: Params, useGMXHR = false): Promise<any>{
+    const func = useGMXHR ? gmFetch : fetch;
+    const resp = await query (func, url, params);
+    try {
+        return await resp.clone().json();
+    } catch (ex) {
+        console.error(ex);
+        console.info(await resp.text());
+        throw (ex);
+    }
 }
 
 /**
@@ -557,14 +571,12 @@ async function ajax (url: string, params: Params = {}, useGMXHR = false): Promis
  * @param {Params} [params={}] - Request params 
  * @returns {Promise<object>} Parsed server response
  */
-async function animepictures<Path extends string> (path: Path, page: number|string, params: Params = {}): Promise<APRespType<Path>> {
-    const resp = await ajax(`https://anime-pictures.net${path}${page}`, {
+function animepictures<Path extends string> (path: Path, page: number|string, params: Params = {}): Promise<APRespType<Path>> {
+    return get(`https://anime-pictures.net${path}${page}`, {
         lang: "en",
         type: "json",
         ...params,
     });
-    if (!resp.ok) throw resp;
-    return resp.json();
 }
 
 const AnimePictures = {
@@ -595,16 +607,14 @@ async function danbooru<Path extends string> (path: Path, params: Params = {}): 
     }
     let res: DanbooruBadResponse | DBRespType<Path>;
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
-        res = await ajax(`https://danbooru.donmai.us${path}`, params)
-            .then(resp => resp.json());
+        res = await get(`https://danbooru.donmai.us${path}`, params);
 
         if (!("success" in res)) return res;
 
         console.warn(path, params, res.message, `${nth} attempt`);
         await sleep(5000);
     }
-    res = await ajax(`https://danbooru.donmai.us${path}`, params)
-        .then(resp => resp.json());
+    res = await get(`https://danbooru.donmai.us${path}`, params);
     if (!("success" in res)) return res;
     throw new Error(res?.message);
 }
@@ -641,17 +651,28 @@ new LocalValue("snkey", "").subscribe((key) => {
 async function saucenao<dbID extends number> (params: SNParams<dbID>): Promise<SauceNaoResults<dbID>> {
     let res: SauceNaoError | SauceNaoResults<dbID>;
     for (let i = 0; i < 5; i++) {
-        res = await ajax("https://saucenao.com/search.php", {
+        res = await get("https://saucenao.com/search.php", {
             output_type: 2,
             api_key: snapikey,
             ...params,
-        }, true).then(resp => resp.json());
+        }, true);
 
         if ("results" in res) {
             if (res.header.short_remaining < 10) {
                 await sleep(res.header.short_remaining > 3 ? 1400 : 10000);
             }
-            return res;
+            for (let index in res.header.index) {
+                const { status } = res.header.index[index];
+                if (status !== 0) {
+                    console.warn(`Server #${index} is offline (status: ${status})`);
+                }
+            }
+            if (res.results) {
+                return res;
+            }
+            console.warn("No results:", params, res);
+            await sleep(60000);
+            continue;
         }
 
         const { message, status, short_remaining = 0, long_remaining = 0 } = res.header;
