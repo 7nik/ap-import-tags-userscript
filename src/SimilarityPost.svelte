@@ -28,13 +28,13 @@
         dbImg = `https://cdn.donmai.us/preview/${f1}/${f2}/${md5}.jpg`;
     }
     // @ts-ignore
-    const bgcolor = window.is_moderator
+    const bgcolor = unsafeWindow.is_moderator
         ? ["none", "#F0F", "#F90", "#F00"][post.erotics]
         : "none";
     const textColor = post.color.reduce((s,a)=>s+a) > 128*3 ? "black" : "white";
     const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.status];
     // @ts-ignore
-    const lang = window.lang || "en";
+    const lang = unsafeWindow.lang || "en";
 </script>
 
 <span class="post {postClass}">

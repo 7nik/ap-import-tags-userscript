@@ -25,7 +25,7 @@ import SimilarityPost from "./SimilarityPost.svelte";
         </div>
         <PageNavigator {baseUrl} {currPage} {pageCount} />
         <div class="cetner posts_block">
-            {#each posts as post}
+            {#each posts as post (post.id)}
                 <SimilarityPost {post} />
             {/each}
         </div>
