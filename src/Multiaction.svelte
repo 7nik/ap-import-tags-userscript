@@ -2,6 +2,7 @@
     import Block from "./Block.svelte";
     import { AnimePictures } from "./ajax.js";
     import type { AnimePicturesFullTag } from "./ajax.js";
+import { onMount } from "svelte";
 
     let addTags = "";
     let removeTags = "";
@@ -27,6 +28,13 @@
         }
     };
 
+    onMount(() => {
+        // @ts-ignore
+        new unsafeWindow.AnimePictures.AutoComplete("addInput", "/pictures/autocomplete_tag", true);
+        // @ts-ignore
+        new unsafeWindow.AnimePictures.AutoComplete("removeInput", "/pictures/autocomplete_tag", true);
+    });
+
 </script>
 
 <svelte:options accessors={true} />
@@ -36,9 +44,9 @@
         Enable multiaction
     </label>
     <br>
-    <input placeholder="tags to add" bind:value={addTags} />
+    <input id="addInput" placeholder="tags to add" bind:value={addTags} />
     <br>
-    <input placeholder="tags to remove" bind:value={removeTags} />
+    <input id="removeId" placeholder="tags to remove" bind:value={removeTags} />
 </Block>
 
 <style>
