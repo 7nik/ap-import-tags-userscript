@@ -59,26 +59,24 @@
         href={post.dbLink} 
         title="Danbooru post" 
         target="_blank"
-    >
-        <div class="frame">
-            <div class="container" >
-                <!-- svelte-ignore a11y-missing-attribute -->
-                <img class="db_img {imgClass}" src="{dbImg}" />
-            </div>
-        </div>
-    </a>
+    > </a>
     <a class="ap_link" 
         href="/pictures/view_post/{post.id}?lang={lang || "en"}" 
         title="Anime picture {post.width}x{post.height}" 
         target="_blank"
-    >
-        <div class="frame">
-            <div class="container">
-                <!-- svelte-ignore a11y-missing-attribute -->
-                <img class="ap_img {imgClass}" src="{imgLink}" />
-            </div>
+    > </a>
+    <div class="db_img">
+        <div class="container" >
+            <!-- svelte-ignore a11y-missing-attribute -->
+            <img class="{imgClass}" src="{dbImg}" />
         </div>
-    </a>
+    </div>
+    <div class="ap_img">
+        <div class="container">
+            <!-- svelte-ignore a11y-missing-attribute -->
+            <img class="{imgClass}" src="{imgLink}" />
+        </div>
+    </div>
 </span>
 
 <style>
@@ -102,21 +100,19 @@
         width: 50%;
         height: 100%;
     }
-    .ap_link {
-        left: 50%;
+    .ap_link, .ap_img {
+        right: 0;
     }
-    .frame {
+    .db_img, .ap_img {
+        position: absolute;
+        top: 0;
         height: 100%;
-        width: 100%;
+        width: 50%;
         transition: width 1s;
         overflow: hidden;
         pointer-events: none;
     }
-    .ap_link .frame {
-        position: absolute;
-        right: 0;
-    }
-    .ap_link .container {
+    .ap_img .container {
         position: absolute;
         right: 0;
     }
@@ -132,16 +128,16 @@
         display: inline-block;
         width: 500px;
     }
-    .db_link:hover .frame {
-        width: 200%;
+    .db_link:hover ~ .db_img {
+        width: 100%;
     }
-    .db_link:hover + .ap_link .frame {
+    .db_link:hover ~ .ap_img {
         width: 0;
     }
-    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) .frame {
-        width: 0;
+    .ap_link:hover ~ .ap_img {
+        width: 100%;
     }
-    .post:hover .img_block_text:not(:hover) + .db_link:not(:hover) + .ap_link .frame {
-        width: 200%;
+    .ap_link:hover ~ .db_img {
+        width: 0;
     }
 </style>
