@@ -7,13 +7,14 @@ import SimilarityPost from "./SimilarityPost.svelte";
 
     export let params = { name: "", page: 0 };
 
-    const currPage = writable(+params.page);
     const result = new LocalValue(`res_${params.name}`, {} as SavedResult);
-    const pageCount = Math.ceil($result.results.length/100);
+    const pageCount = Math.ceil($result.results.length/20);
     const baseUrl = `#/res/${$result.date}/`;
     let posts: Result[];
+    let currPage: number;
     $: {
-       posts = $result.results.slice($currPage*100, ($currPage+1)*100);
+        currPage = +params.page;
+        posts = $result.results.slice(currPage*20, (currPage+1)*20);
     }
 </script>
 
