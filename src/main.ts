@@ -34,3 +34,10 @@ function startApp () {
     	target: content,
     });
 }
+
+// @ts-ignore
+GM.addStyle(`
+    .post_content + .quick_search {
+        display: none;
+    }
+`);

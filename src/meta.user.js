@@ -6,5 +6,6 @@
 // @author       7nik
 // @match        https://anime-pictures.net/
 // @grant        GM.xmlHttpRequest
+// @grant        GM.addStyle
 // @connect      saucenao.com
 // ==/UserScript==

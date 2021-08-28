@@ -1,7 +1,10 @@
 <script lang="ts">
+    import type Multiaction from "./Multiaction.svelte";
+
     import type { Result } from "./importer.js";
     export let post: Result;
     export let size: "small"|"medium"|"big" = "medium";
+    export let multiaction: Multiaction;
 
     const imgLink = post.preview
         .replace(/_[scb]p\./, {
@@ -35,9 +38,22 @@
     const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.status];
     // @ts-ignore
     const lang = unsafeWindow.lang || "en";
+
+    let pending = false;
+    function handleClick (ev: MouseEvent) {
+        if (pending) {
+            ev.preventDefault();
+            return;
+        }
+        if (multiaction?.enabled) {
+            ev.preventDefault();
+            pending = true;
+            multiaction.apply(post.id).finally(() => pending = false);
+        }
+    }
 </script>
 
-<span class="post {postClass}">
+<span class="post {postClass}" class:pending on:click={handleClick}>
     <div class="img_block_text" style="
         opacity: 1;
         background-image: linear-gradient(to right, transparent, rgb({post.color}), transparent);
@@ -93,6 +109,9 @@
     }
     span.post {
         position: relative;
+    }
+    .post.pending {
+        opacity: 0.5;
     }
     .db_link, .ap_link {
         display: block;

@@ -39,9 +39,38 @@ type AnimePicturesPostInfo = {
     user_favorite_folders: string[],
 }
 
-type APRespType<path> = 
-    path extends `/pictures/view_post/${string}` ? AnimePicturesPostInfo :
-    never;
+type AnimePicturesFullTag = {
+    id: number,
+    tag: string, // tag name
+    tag_ru: string | null,
+    tag_jp: string | null,
+    num: number, // number of posts with this tag
+    num_pub: number, // number public posts
+    type: 0|1|2|3|4|5|6|7,
+    description_en: string,
+    description_ru: string,
+    description_jp: string,
+    alias: number | null, // whether it's alias and to whom
+    parent: number | null, // whether it's a child and whos
+    views: number, // now this counter is disabled
+}
+
+type AnimePicturesTagSearch = {
+    success: boolean,
+    offset: number,
+    limit: number,
+    tags: AnimePicturesFullTag[],
+}
+
+type AnimePicturesGetTag = {
+    success: boolean,
+    tag: AnimePicturesFullTag,
+}
+
+type AnimePicturesTagsHtml = {
+    success: boolean,
+    post_tags: string, // HTML of <ul.tags> elem with all post tags
+}
 
 type DanbooruBadResponse = {
     success: false,
@@ -531,30 +560,38 @@ async function gmFetch (url: string, params: RequestInit = {}): Promise<Response
 
 /**
  * Does network query and re-attempts up to five times
+ * @param {FetchFunc} fetch - The fetch function to use for querying
  * @param {string} url - Full URL of the request 
- * @param {Params} [params={}] - Get-params of the request 
+ * @param {RequestInit} [params={}] - Get-params of the request 
  * @returns {Promise<Response>} Raw server response
  */
 async function query (fetch: FetchFunc, url: string, params: RequestInit = {}): Promise<Response> {
-    const link = new URL(url);
-    Object.entries(params).forEach(
-        ([key, value]) => link.searchParams.append(key, value.toString())
-    );
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         try {
-            return await fetch(link.toString(), params);
+            return await fetch(url, params);
         } catch (ex) {
-            console.warn(ex, link.href, `\nFetch error. ${nth} attempt`);
+            console.warn(ex, url, `\nFetch error. ${nth} attempt`);
             await sleep(5000);
         }
     }
     // do not mute exception at the last attempt
-    return await fetch(link.toString(), params);
+    return await fetch(url, params);
 }
 
-async function get (url: string, params: Params, useGMXHR = false): Promise<any>{
+/**
+ * Make a GET query
+ * @param {string} url - Full URL of the request 
+ * @param {Params} params - Query params to be added to the URL
+ * @param {boolean} useGMXHR - use GM.XHR or fetch
+ * @returns Promise<any> - JSON response
+ */
+async function get (url: string, params: Params = {}, useGMXHR = false): Promise<any> {
+    const link = new URL(url);
+    Object.entries(params).forEach(
+        ([key, value]) => link.searchParams.append(key, value.toString())
+    );
     const func = useGMXHR ? gmFetch : fetch;
-    const resp = await query (func, url, params);
+    const resp = await query (func, link.toString(), { method: "GET" });
     try {
         return await resp.clone().json();
     } catch (ex) {
@@ -565,28 +602,105 @@ async function get (url: string, params: Params, useGMXHR = false): Promise<any>
 }
 
 /**
- * Do a request to Anime-Pictures.net
- * @param {string} path - Constant part of relative link to the request 
- * @param {number|string} page - Variable part of relative link to the request 
- * @param {Params} [params={}] - Request params 
- * @returns {Promise<object>} Parsed server response
+ * Send a POST query
+ * @param {string} url - Full URL of the request 
+ * @param {Params} params - Query params to be send
+ * @param {boolean} useGMXHR - use GM.XHR or fetch
+ * @returns Promise<any> - JSON response
  */
-function animepictures<Path extends string> (path: Path, page: number|string, params: Params = {}): Promise<APRespType<Path>> {
-    return get(`https://anime-pictures.net${path}${page}`, {
-        lang: "en",
-        type: "json",
-        ...params,
-    });
+async function post (url: string, params: Params = {}, useGMXHR = false): Promise<any>{
+    const func = useGMXHR ? gmFetch : fetch;
+    const body: RequestInit = { method: "POST" };
+    if (params) {
+        const fdata = new FormData();
+        Object.entries(params).forEach(([key, value]) => fdata.append(key, value.toString()));
+        body.body = fdata;
+    }
+    const resp = await query (func, url, body);
+    try {
+        return await resp.clone().json();
+    } catch (ex) {
+        console.error(ex);
+        console.info(await resp.text());
+        throw (ex);
+    }
 }
 
 const AnimePictures = {
+    /**
+     * Add tags to a post
+     * @param  {string} tagNames - List of tags separated by `||` 
+     * @param  {(number|string)} postId - Id of the post
+     * @param  {Boolean} createTags - Allow creating of new tags, requires moderator rights
+     * @return {Promise<string>} - HTML of ul.tags element
+     */
+    async addTags (tagNames: string, postId: number, createTags: boolean = false): Promise<string> {
+        const res: AnimePicturesTagsHtml = await post( 
+            `https://anime-pictures.net/pictures/add_tag_to_post/${postId}`,
+            { text: tagNames, add_new_tag: createTags.toString() },
+        );
+        return res.post_tags;
+    },
     /**
      * Get post info by id
      * @param {number|string} postId - Post id 
      * @returns {Promise<AnimePicturesPostInfo>} Post info
      */
     getPostInfo (postId: number|string): Promise<AnimePicturesPostInfo> {
-        return animepictures("/pictures/view_post/", postId);
+        return get(`https://anime-pictures.net/pictures/view_post/${postId}`, {
+            lang: "en",
+            type: "json",
+        });
+    },
+    /**
+     * Get tag info by its Id
+     * @param  {number} tagId - Id of the tag
+     * @return {Promise<AnimePicturesFullTag>} Tag info
+     */
+    async getTagById (tagId: number): Promise<AnimePicturesFullTag> {
+        const res: AnimePicturesGetTag = await get(
+            `https://anime-pictures.net/api/v3/tags/${tagId}`,
+        );
+        if (res.tag.alias) {
+            return this.getTagById(res.tag.alias);
+        }
+        return res.tag;
+    },
+    /**
+     * Find a tag by given name in any language
+     * @param {string} tagName - name of tag to search 
+     * @returns {Promise<AnimePicturesFullTag>} Tag info
+     */
+    async getTagByName (tagName: string): Promise<AnimePicturesFullTag> {
+        tagName = encodeURIComponent(tagName.toLowerCase());
+        const res: AnimePicturesTagSearch = await get(
+            `https://anime-pictures.net/api/v3/tags?tag:smart=${tagName}`,
+        );
+        if (res.tags.length > 1) {
+            console.warn("Found multipe tags of", tagName, res.tags);
+        }
+        if (!res.tags[0]) return res.tags[0];
+        // if it's an alias, return the main tag
+        if (res.tags[0].alias) {
+            return await this.getTagById(res.tags[0].alias);
+        }
+        return res.tags[0];
+    },
+    /**
+     * Delete a tag from a post, requires rights base on post status:
+     * NEW - uploader or moderator;
+     * PRE - any active member;
+     * Public, Banned - moderator only.
+     * @param  {(number|string)} tagId - Tag Id to remove
+     * @param  {(number|string)} postId - Post Id
+     * @return {Promise<string>} - JSON response
+     */
+    async removeTag (tagId: number, postId: number): Promise<string> {
+        const res: AnimePicturesTagsHtml = await post(
+            `/pictures/del_tag_from_post/${postId}`,
+            { tag_id: tagId },
+        );
+        return res.post_tags;
     },
 };
 
@@ -703,4 +817,4 @@ const SauceNAO = {
 };
 
 export { AnimePictures, Danbooru, SauceNAO };
-export type { AnimePicturesPostInfo, DanbooruPostInfo, SnrAnimePictures };
+export type { AnimePicturesPostInfo, AnimePicturesFullTag, DanbooruPostInfo, SnrAnimePictures };

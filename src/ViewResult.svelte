@@ -1,9 +1,10 @@
 <script lang="ts">
 import type { Result, SavedResult } from "./importer";
-import PageNavigator from "./PageNavigator.svelte";
-import { writable } from "svelte/store";
-import LocalValue from "./localStorage";
 import SimilarityPost from "./SimilarityPost.svelte";
+import PageNavigator from "./PageNavigator.svelte";
+import Multiaction from "./Multiaction.svelte";
+import LocalValue from "./localStorage";
+import { onDestroy } from "svelte";
 
     export let params = { name: "", page: 0 };
 
@@ -16,6 +17,14 @@ import SimilarityPost from "./SimilarityPost.svelte";
         currPage = +params.page;
         posts = $result.results.slice(currPage*20, (currPage+1)*20);
     }
+    
+    const multiaction = new Multiaction({
+        target: document.getElementById("sidebar") ?? document.body,
+        anchor: document.querySelector("#sidebar>.quick_search") ?? undefined,
+    });
+    onDestroy(() => {
+        multiaction.$destroy();
+    });
 </script>
 
 <a href="#/home">&lt; Back</a>
@@ -27,7 +36,7 @@ import SimilarityPost from "./SimilarityPost.svelte";
         <PageNavigator {baseUrl} {currPage} {pageCount} />
         <div class="cetner posts_block">
             {#each posts as post (post.id)}
-                <SimilarityPost {post} />
+                <SimilarityPost {post} {multiaction}/>
             {/each}
         </div>
         <PageNavigator {baseUrl} {currPage} {pageCount} />
