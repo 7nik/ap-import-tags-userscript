@@ -1,12 +1,11 @@
 import { get, sleep } from "./ajax";
 import LocalValue from "../localStorage";
     
-type Params = Record<string, string|number>;
-type SNParams<ID> = Params & { db: ID };
+type Params<ID> = Record<string, string|number> & { db: ID };
 type textNumber = string; // number presented as string
 type timestamp = string;
 
-type SauceNaoResult = {
+type BaseResult = {
     header: {
         similarity: textNumber,
         thumbnail: string, // full link
@@ -18,7 +17,7 @@ type SauceNaoResult = {
         ext_urls: string[]
     }
 }
-type SnrHMagazines = SauceNaoResult & {
+type HMagazinesResult = BaseResult & {
     header: { index_id: 0 },
     data: {
         title: string,
@@ -26,7 +25,7 @@ type SnrHMagazines = SauceNaoResult & {
         data: string,
     }
 }
-type SnrHGameCG = SauceNaoResult & {
+type HGameCGResult = BaseResult & {
     header: { index_id: 2 },
     data: {
         title: string,
@@ -34,7 +33,7 @@ type SnrHGameCG = SauceNaoResult & {
         getch_id: textNumber,
     }
 }
-type SnrPixiv = SauceNaoResult & {
+type PixivResult = BaseResult & {
     header: { index_id: 5|6|51|52|53 },
     data: {
         title: string,
@@ -43,7 +42,7 @@ type SnrPixiv = SauceNaoResult & {
         member_id: number,
     }
 }
-type SnrNicoNicoSeiga = SauceNaoResult & {
+type NicoNicoSeigaResult = BaseResult & {
     header: { index_id: 8 },
     data: {
         title: string,
@@ -52,7 +51,7 @@ type SnrNicoNicoSeiga = SauceNaoResult & {
         member_id: number,
     }
 }
-type SnrDanbooru = SauceNaoResult & {
+type DanbooruResult = BaseResult & {
     header: { index_id: 9 },
     data: {
         danbooru_id: number,
@@ -62,7 +61,7 @@ type SnrDanbooru = SauceNaoResult & {
         source: string,
     }
 }
-type SnrDrawrImages = SauceNaoResult & {
+type DrawrImagesResult = BaseResult & {
     header: { index_id: 10 },
     data: {
         drawr_id: number,
@@ -71,7 +70,7 @@ type SnrDrawrImages = SauceNaoResult & {
         member_id: number,
     }
 }
-type SnrNijieImages = SauceNaoResult & {
+type NijieImagesResult = BaseResult & {
     header: { index_id: 11 },
     data: {
         nijie_id: number,
@@ -80,7 +79,7 @@ type SnrNijieImages = SauceNaoResult & {
         member_id: number,
     }
 }
-type SnrYandere = SauceNaoResult & {
+type YandereResult = BaseResult & {
     header: { index_id: 12 },
     data: {
         yandere_id: number,
@@ -90,14 +89,14 @@ type SnrYandere = SauceNaoResult & {
         source: string,
     }
 }
-type SnrFakku = SauceNaoResult & {
+type FakkuResult = BaseResult & {
     header: { index_id: 16 },
     data: {
         creator: string,
         source: string,
     }
 }
-type SnrHMisc = SauceNaoResult & {
+type HMiscResult = BaseResult & {
     header: { index_id: 18 },
     data: {
         creator: string[],
@@ -106,14 +105,14 @@ type SnrHMisc = SauceNaoResult & {
         jp_name: string,
     }
 }
-type Snr2DMarket = SauceNaoResult & {
+type TwoDMarketResult = BaseResult & {
     header: { index_id: 19 },
     data: {
         creator: string[],
         source: string,
     }
 }
-type SnrMediBand = SauceNaoResult & {
+type MediBandResult = BaseResult & {
     header: { index_id: 20 },
     data: {
         title: string,
@@ -122,7 +121,7 @@ type SnrMediBand = SauceNaoResult & {
         member_id: number,
     }
 }
-type SnrAnidb = SauceNaoResult & {
+type AnidbResult = BaseResult & {
     header: { index_id: 21|211|22 },
     data: {
         source: string,
@@ -132,7 +131,7 @@ type SnrAnidb = SauceNaoResult & {
         est_time: string,
     }
 }
-type SnrImdb = SauceNaoResult & {
+type ImdbResult = BaseResult & {
     header: { index_id: 23|24 },
     data: {
         source: string,
@@ -142,7 +141,7 @@ type SnrImdb = SauceNaoResult & {
         est_time: string,
     }
 }
-type SnrGelbooru = SauceNaoResult & {
+type GelbooruResult = BaseResult & {
     header: { index_id: 25 },
     data: {
         gelbooru_id: number,
@@ -152,7 +151,7 @@ type SnrGelbooru = SauceNaoResult & {
         source: string,
     }
 }
-type SnrKonachan = SauceNaoResult & {
+type KonachanResult = BaseResult & {
     header: { index_id: 26 },
     data: {
         konachan_id: number,
@@ -162,7 +161,7 @@ type SnrKonachan = SauceNaoResult & {
         source: string,
     }
 }
-type SnrSankakuChan = SauceNaoResult & {
+type SankakuChanResult = BaseResult & {
     header: { index_id: 27 },
     data: {
         sankaku_id: number,
@@ -172,7 +171,7 @@ type SnrSankakuChan = SauceNaoResult & {
         source: string,
     }
 }
-type SnrAnimePictures = SauceNaoResult & {
+type AnimePicturesResult = BaseResult & {
     header: { index_id: 28 },
     data: {
         "anime-pictures_id": number,
@@ -182,7 +181,7 @@ type SnrAnimePictures = SauceNaoResult & {
         source: string,
     }
 }
-type SnrE621 = SauceNaoResult & {
+type E621Result = BaseResult & {
     header: { index_id: 29 },
     data: {
         e621_id: number,
@@ -192,7 +191,7 @@ type SnrE621 = SauceNaoResult & {
         source: string,
     }
 }
-type SnrSankakuIdol = SauceNaoResult & {
+type SankakuIdolResult = BaseResult & {
     header: { index_id: 30 },
     data: {
         idol_id: number,
@@ -202,7 +201,7 @@ type SnrSankakuIdol = SauceNaoResult & {
         source: string,
     }
 }
-type SnrBcy = SauceNaoResult & {
+type BcyResult = BaseResult & {
     header: { index_id: 31|32 },
     data: {
         bcy_id: number,
@@ -213,7 +212,7 @@ type SnrBcy = SauceNaoResult & {
         bcy_type: string,
     }
 }
-type SnrPortalGraphics = SauceNaoResult & {
+type PortalGraphicsResult = BaseResult & {
     header: { index_id: 33 },
     data: {
         pg_id: number,
@@ -222,7 +221,7 @@ type SnrPortalGraphics = SauceNaoResult & {
         member_id: number,
     }
 }
-type SnrDeviantArt = SauceNaoResult & {
+type DeviantArtResult = BaseResult & {
     header: { index_id: 34|341 },
     data: {
         da_id: number,
@@ -231,7 +230,7 @@ type SnrDeviantArt = SauceNaoResult & {
         author_url: string,
     }
 }
-type SnrPawoo = SauceNaoResult & {
+type PawooResult = BaseResult & {
     header: { index_id: 35 },
     data: {
         pawoo_id: number,
@@ -241,7 +240,7 @@ type SnrPawoo = SauceNaoResult & {
         created_at: timestamp,
     }
 }
-type SnrMangaUpdates = SauceNaoResult & {
+type MangaUpdatesResult = BaseResult & {
     header: { index_id: 36 },
     data: {
         mu_id: number,
@@ -250,7 +249,7 @@ type SnrMangaUpdates = SauceNaoResult & {
         type: string,
     }
 }
-type SnrMangaDex = SauceNaoResult & {
+type MangaDexResult = BaseResult & {
     header: { index_id: 37 },
     data: {
         md_id: number,
@@ -260,7 +259,7 @@ type SnrMangaDex = SauceNaoResult & {
         author: string,
     }
 }
-type SnrEHentai = SauceNaoResult & {
+type EHentaiResult = BaseResult & {
     header: { index_id: 38 },
     data: {
         source: string,
@@ -269,7 +268,7 @@ type SnrEHentai = SauceNaoResult & {
         jp_name: string,
     }
 }
-type SnrArtStation = SauceNaoResult & {
+type ArtStationResult = BaseResult & {
     header: { index_id: 39 },
     data: {
         title: string,
@@ -278,7 +277,7 @@ type SnrArtStation = SauceNaoResult & {
         author_url: string,
     }
 }
-type SnrFurAffinity = SauceNaoResult & {
+type FurAffinityResult = BaseResult & {
     header: { index_id: 40 },
     data: {
         fa_id: number,
@@ -287,7 +286,7 @@ type SnrFurAffinity = SauceNaoResult & {
         author_url: string,
     }
 }
-type SnrTwitter = SauceNaoResult & {
+type TwitterResult = BaseResult & {
     header: { index_id: 41 },
     data: {
         created_at: string,
@@ -296,7 +295,7 @@ type SnrTwitter = SauceNaoResult & {
         twitter_user_handle: string,
     }
 }
-type SnrFurryNetwork = SauceNaoResult & {
+type FurryNetworkResult = BaseResult & {
     header: { index_id: 42 },
     data: {
         fn_id: number,
@@ -307,49 +306,49 @@ type SnrFurryNetwork = SauceNaoResult & {
     }
 }
 
-type SnrAll = SnrHMagazines|SnrHGameCG|SnrPixiv|SnrNicoNicoSeiga|SnrDanbooru|
-SnrDrawrImages|SnrNijieImages|SnrYandere|SnrFakku|SnrHMisc|Snr2DMarket|
-SnrMediBand|SnrAnidb|SnrImdb|SnrGelbooru|SnrKonachan|SnrSankakuChan|
-SnrAnimePictures|SnrE621|SnrSankakuIdol|SnrBcy|SnrPortalGraphics|
-SnrDeviantArt|SnrPawoo|SnrMangaUpdates|SnrMangaDex|SnrEHentai|SnrArtStation|
-SnrFurAffinity|SnrTwitter|SnrFurryNetwork;
+type AnyResult = HMagazinesResult|HGameCGResult|PixivResult|NicoNicoSeigaResult|DanbooruResult|
+DrawrImagesResult|NijieImagesResult|YandereResult|FakkuResult|HMiscResult|TwoDMarketResult|
+MediBandResult|AnidbResult|ImdbResult|GelbooruResult|KonachanResult|SankakuChanResult|
+AnimePicturesResult|E621Result|SankakuIdolResult|BcyResult|PortalGraphicsResult|
+DeviantArtResult|PawooResult|MangaUpdatesResult|MangaDexResult|EHentaiResult|ArtStationResult|
+FurAffinityResult|TwitterResult|FurryNetworkResult;
 
-type SnrRespType<id> = 
-    id extends 0 ? SnrHMagazines :
-    id extends 2 ? SnrHGameCG :
-    id extends 5|6|51|52|53 ? SnrPixiv :
-    id extends 8 ? SnrNicoNicoSeiga : 
-    id extends 9 ? SnrDanbooru :
-    id extends 10 ? SnrDrawrImages :
-    id extends 11 ? SnrNijieImages : 
-    id extends 12 ? SnrYandere :
-    id extends 16 ? SnrFakku :
-    id extends 18 ? SnrHMisc :
-    id extends 19 ? Snr2DMarket :
-    id extends 20 ? SnrMediBand :
-    id extends 21|211|22 ? SnrAnidb :
-    id extends 23|24 ? SnrImdb :
-    id extends 25 ? SnrGelbooru :
-    id extends 26 ? SnrKonachan :
-    id extends 27 ? SnrSankakuChan :
-    id extends 28 ? SnrAnimePictures :
-    id extends 29 ? SnrE621 :
-    id extends 30 ? SnrSankakuIdol :
-    id extends 31|32 ? SnrBcy :
-    id extends 33 ? SnrPortalGraphics :
-    id extends 34|341 ? SnrDeviantArt :
-    id extends 35 ? SnrPawoo :
-    id extends 36 ? SnrMangaUpdates :
-    id extends 37 ? SnrMangaDex :
-    id extends 38 ? SnrEHentai :
-    id extends 39 ? SnrArtStation :
-    id extends 40 ? SnrFurAffinity :
-    id extends 41 ? SnrTwitter :
-    id extends 42 ? SnrFurryNetwork :
-    id extends 999 ? SnrAll :
+type AutoResult<id> = 
+    id extends 0 ? HMagazinesResult :
+    id extends 2 ? HGameCGResult :
+    id extends 5|6|51|52|53 ? PixivResult :
+    id extends 8 ? NicoNicoSeigaResult : 
+    id extends 9 ? DanbooruResult :
+    id extends 10 ? DrawrImagesResult :
+    id extends 11 ? NijieImagesResult : 
+    id extends 12 ? YandereResult :
+    id extends 16 ? FakkuResult :
+    id extends 18 ? HMiscResult :
+    id extends 19 ? TwoDMarketResult :
+    id extends 20 ? MediBandResult :
+    id extends 21|211|22 ? AnidbResult :
+    id extends 23|24 ? ImdbResult :
+    id extends 25 ? GelbooruResult :
+    id extends 26 ? KonachanResult :
+    id extends 27 ? SankakuChanResult :
+    id extends 28 ? AnimePicturesResult :
+    id extends 29 ? E621Result :
+    id extends 30 ? SankakuIdolResult :
+    id extends 31|32 ? BcyResult :
+    id extends 33 ? PortalGraphicsResult :
+    id extends 34|341 ? DeviantArtResult :
+    id extends 35 ? PawooResult :
+    id extends 36 ? MangaUpdatesResult :
+    id extends 37 ? MangaDexResult :
+    id extends 38 ? EHentaiResult :
+    id extends 39 ? ArtStationResult :
+    id extends 40 ? FurAffinityResult :
+    id extends 41 ? TwitterResult :
+    id extends 42 ? FurryNetworkResult :
+    id extends 999 ? AnyResult :
     never;
 
-type SauceNaoError = {
+type ErrorResult = {
     header: {
         user_id?: textNumber,
         account_type?: textNumber,
@@ -364,7 +363,7 @@ type SauceNaoError = {
     }
 }
 
-type SauceNaoResults<dbID extends number> = {
+type Response<dbID extends number> = {
     header: {
         user_id: textNumber,
         account_type: textNumber,
@@ -386,7 +385,7 @@ type SauceNaoResults<dbID extends number> = {
         results_requested: number,
         results_returned: number,
     }
-    results: SnrRespType<dbID>[],
+    results: AutoResult<dbID>[],
 }
 
 let snapikey: string;
@@ -396,10 +395,10 @@ new LocalValue("snkey", "").subscribe((key) => {
 /**
  * Do search on SauceNAO
  * @param {Params} params - Params of the search (url, numres, db, dbmask, dbmaski, dedupe) 
- * @returns {Promise<SauceNaoResults} Found pictures
+ * @returns {Promise<Response} Found pictures
  */
-async function saucenao<dbID extends number> (params: SNParams<dbID>): Promise<SauceNaoResults<dbID>> {
-    let res: SauceNaoError | SauceNaoResults<dbID>;
+async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Response<dbID>> {
+    let res: ErrorResult | Response<dbID>;
     for (let i = 0; i < 5; i++) {
         res = await get("https://saucenao.com/search.php", {
             output_type: 2,
@@ -436,9 +435,9 @@ const SauceNAO = {
     /**
      * Find the most similar picture to a given one on Anime-Pictures
      * @param {string} url - Picture to search 
-     * @returns {Promise<SnrAnimePictures>} The best match
+     * @returns {Promise<AnimePicturesResult>} The best match
      */
-    async findClosestOnAnimePictures (url: string): Promise<SnrAnimePictures> {
+    async findClosestOnAnimePictures (url: string): Promise<AnimePicturesResult> {
         const res = await saucenao({ url, db: 28, numres: 1 });
         return res.results[0];
     },
@@ -453,4 +452,4 @@ const SauceNAO = {
 };
 
 export default SauceNAO;
-export type { SnrAnimePictures };
+export type { AnimePicturesResult };

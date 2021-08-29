@@ -1,9 +1,9 @@
-import { readable, get, Readable, Subscriber } from 'svelte/store';
+import { readable, Readable } from 'svelte/store';
 import LocalValue from "./localStorage";
 import AP from "./net/AnimePictures"; 
 import DB from "./net/Danbooru"; 
 import SN from "./net/SauceNAO"; 
-import type { DanbooruPostInfo } from "./net/Danbooru"; 
+import type { PostInfo } from "./net/Danbooru"; 
 
 type State = {
     progress: number,
@@ -45,7 +45,7 @@ export default class Importer {
     private doPause = false;
     private page = 0;
     private done = 0;
-    private posts:DanbooruPostInfo[] = [];
+    private posts:PostInfo[] = [];
     // @ts-ignore - readable's callback is called immediately
     private saveState: Function;
     private stateObj = {

@@ -1,9 +1,8 @@
 import { get, post } from "./ajax";
     
-type textNumber = string; // number presented as string
 type timestamp = string;
 
-type AnimePicturesPostInfo = {
+type PostInfo = {
     id: number,
     md5: string,
     md5_pixels: string,
@@ -36,7 +35,7 @@ type AnimePicturesPostInfo = {
     user_favorite_folders: string[],
 }
 
-type AnimePicturesFullTag = {
+type FullTag = {
     id: number,
     tag: string, // tag name
     tag_ru: string | null,
@@ -52,19 +51,19 @@ type AnimePicturesFullTag = {
     views: number, // now this counter is disabled
 }
 
-type AnimePicturesTagSearch = {
+type TagSearchResult = {
     success: boolean,
     offset: number,
     limit: number,
-    tags: AnimePicturesFullTag[],
+    tags: FullTag[],
 }
 
-type AnimePicturesGetTag = {
+type GetTagResult = {
     success: boolean,
-    tag: AnimePicturesFullTag,
+    tag: FullTag,
 }
 
-type AnimePicturesTagsHtml = {
+type PostHtmlTags = {
     success: boolean,
     post_tags: string, // HTML of <ul.tags> elem with all post tags
 }
@@ -78,7 +77,7 @@ const AnimePictures = {
      * @return {Promise<string>} - HTML of ul.tags element
      */
     async addTags (tagNames: string, postId: number, createTags: boolean = false): Promise<string> {
-        const res: AnimePicturesTagsHtml = await post( 
+        const res: PostHtmlTags = await post( 
             `https://anime-pictures.net/pictures/add_tag_to_post/${postId}`,
             { text: tagNames, add_new_tag: createTags.toString() },
         );
@@ -87,9 +86,9 @@ const AnimePictures = {
     /**
      * Get post info by id
      * @param {number|string} postId - Post id 
-     * @returns {Promise<AnimePicturesPostInfo>} Post info
+     * @returns {Promise<PostInfo>} Post info
      */
-    getPostInfo (postId: number|string): Promise<AnimePicturesPostInfo> {
+    getPostInfo (postId: number|string): Promise<PostInfo> {
         return get(`https://anime-pictures.net/pictures/view_post/${postId}`, {
             lang: "en",
             type: "json",
@@ -98,10 +97,10 @@ const AnimePictures = {
     /**
      * Get tag info by its Id
      * @param  {number} tagId - Id of the tag
-     * @return {Promise<AnimePicturesFullTag>} Tag info
+     * @return {Promise<FullTag>} Tag info
      */
-    async getTagById (tagId: number): Promise<AnimePicturesFullTag> {
-        const res: AnimePicturesGetTag = await get(
+    async getTagById (tagId: number): Promise<FullTag> {
+        const res: GetTagResult = await get(
             `https://anime-pictures.net/api/v3/tags/${tagId}`,
         );
         if (res.tag.alias) {
@@ -112,11 +111,11 @@ const AnimePictures = {
     /**
      * Find a tag by given name in any language
      * @param {string} tagName - name of tag to search 
-     * @returns {Promise<AnimePicturesFullTag>} Tag info
+     * @returns {Promise<FullTag>} Tag info
      */
-    async getTagByName (tagName: string): Promise<AnimePicturesFullTag> {
+    async getTagByName (tagName: string): Promise<FullTag> {
         tagName = encodeURIComponent(tagName.toLowerCase());
-        const res: AnimePicturesTagSearch = await get(
+        const res: TagSearchResult = await get(
             `https://anime-pictures.net/api/v3/tags?tag:smart=${tagName}`,
         );
         if (res.tags.length > 1) {
@@ -139,7 +138,7 @@ const AnimePictures = {
      * @return {Promise<string>} - JSON response
      */
     async removeTag (tagId: number, postId: number): Promise<string> {
-        const res: AnimePicturesTagsHtml = await post(
+        const res: PostHtmlTags = await post(
             `/pictures/del_tag_from_post/${postId}`,
             { tag_id: tagId },
         );
@@ -148,4 +147,4 @@ const AnimePictures = {
 };
 
 export default AnimePictures;
-export type { AnimePicturesPostInfo, AnimePicturesFullTag };
+export type { PostInfo, FullTag };

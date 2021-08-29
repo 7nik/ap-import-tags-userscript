@@ -3,9 +3,9 @@
     import AP from "../libs/net/AnimePictures";
     import LocalValue from "../libs/localStorage";
     import { onMount } from "svelte";
-    import type { AnimePicturesFullTag } from "../libs/net/AnimePictures";
+    import type { FullTag } from "../libs/net/AnimePictures";
 
-    let cache: Record<string, AnimePicturesFullTag> = {};
+    let cache: Record<string, FullTag> = {};
     let mode = "off";
     let action = new LocalValue(`ma_off`, { addTags: "", removeTags: "" });
 

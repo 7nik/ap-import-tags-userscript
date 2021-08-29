@@ -4,13 +4,13 @@ import LocalValue from "../localStorage";
 type Params = Record<string, string|number>;
 type timestamp = string;
 
-type DanbooruBadResponse = {
+type BadResponse = {
     success: false,
     message: string,
     backtrace: string[],
 }
 
-type DanbooruPostInfo = {
+type PostInfo = {
     id?: number, // in case loli/shota is hidden for anons and regular users
     created_at: timestamp, // RFC 3339 format
     uploader_id: number,
@@ -62,15 +62,15 @@ type DanbooruPostInfo = {
     bit_flags: number,
 }
 
-type DanbooruPostCount = {
+type PostCount = {
     counts: {
         posts: number,
     }
 }
 
-type DBRespType<path> = 
-    path extends "/counts/posts.json" ? DanbooruPostCount :
-    path extends "/posts.json" ? DanbooruPostInfo[] :
+type RespType<path> = 
+    path extends "/counts/posts.json" ? PostCount :
+    path extends "/posts.json" ? PostInfo[] :
     never;
 
 let dblogin: string, dbapikey: string;
@@ -83,12 +83,12 @@ new LocalValue("dbkey", "").subscribe((key) => {
  * @param {Params} [params={}] - Request params 
  * @returns {Promise<object>} Parsed server response
  */
-async function danbooru<Path extends string> (path: Path, params: Params = {}): Promise<DBRespType<Path>> {
+async function danbooru<Path extends string> (path: Path, params: Params = {}): Promise<RespType<Path>> {
     if (dblogin) {
         params.login = dblogin;
         params.api_key = dbapikey;
     }
-    let res: DanbooruBadResponse | DBRespType<Path>;
+    let res: BadResponse | RespType<Path>;
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         res = await get(`https://danbooru.donmai.us${path}`, params);
 
@@ -115,12 +115,12 @@ const Danbooru = {
      * Get post infos
      * @param {string} tags - Query to search the posts
      * @param {number} page - Page number of results  
-     * @returns {Promise<DanbooruPostInfo[]>} Array of post infos
+     * @returns {Promise<PostInfo[]>} Array of post infos
      */
-    findPosts (tags: string, page: number = 1): Promise<DanbooruPostInfo[]> {
+    findPosts (tags: string, page: number = 1): Promise<PostInfo[]> {
         return danbooru("/posts.json", { tags, page });
     },
 };
 
 export default Danbooru;
-export type { DanbooruPostInfo };
+export type { PostInfo };
