@@ -5,19 +5,17 @@
     import { onMount } from "svelte";
     import LocalValue from "./localStorage";
 
-    let addTags = "";
-    let removeTags = "";
     let cache: Record<string, AnimePicturesFullTag> = {};
     let mode = "off";
     let action = new LocalValue(`ma_off`, { addTags: "", removeTags: "" });
 
     export let enabled = false;
     export const apply = async (postId: number) => {
-        if (addTags) {
-            await AnimePictures.addTags(addTags, postId);
+        if ($action.addTags) {
+            await AnimePictures.addTags($action.addTags, postId);
         }
-        if (removeTags) {
-            const tags = removeTags.split("||")
+        if ($action.removeTags) {
+            const tags = $action.removeTags.split("||")
                 .map(name => name.trim().toLocaleLowerCase())
                 .filter(name => name);
             for (const tagName of tags) {
@@ -93,7 +91,7 @@ Use number keys to switch between actions.
         disabled={!enabled}
     />
     <br>
-    <input id="removeId" 
+    <input id="removeInput" 
         placeholder="tags to remove" 
         bind:value={$action.removeTags} 
         disabled={!enabled}
