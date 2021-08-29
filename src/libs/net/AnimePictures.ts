@@ -18,7 +18,7 @@ type PostInfo = {
     download_count: number,
     erotics: 0|1|2|3, // no erotic, light erotic, [medium] erotic, hard erotic
     color: [number, number, number], // average color, RGB format
-    ext: ".jpg"|".png"|".gif",
+    ext: ".jpg"|".jpeg"|".png"|".gif",
     status: 0|-2|1|2, // new|pre|published|banned
     spoiler: boolean, // presense of the spoiler tag
     have_alpha: boolean, // presence the alpha channel?
@@ -68,6 +68,17 @@ type PostHtmlTags = {
     post_tags: string, // HTML of <ul.tags> elem with all post tags
 }
 
+type AutocompleteTag = {
+    c: number, // tag category
+    id: number, // tag id
+    t: string, // tag name where the matched part is wrapped by `<b>`
+    t2: string | null, // if it's alias, main tag
+}
+
+type AutocompleteTagResult = {
+    tags_list: AutocompleteTag[],
+}
+
 const AnimePictures = {
     /**
      * Add tags to a post
@@ -82,6 +93,17 @@ const AnimePictures = {
             { text: tagNames, add_new_tag: createTags.toString() },
         );
         return res.post_tags;
+    },
+    /**
+     * Does a search by part of tag name
+     * @param {string} tagName - Partial or full tag name
+     * @returns {Promise<AutocompleteTag[]>} - Matched tags
+     */
+    async autocompleteTag (tagName: string): Promise<AutocompleteTag[]> {
+        const res: AutocompleteTagResult = await post("https://anime-pictures.net/pictures/autocomplete_tag", {
+            tag: tagName,
+        });
+        return res.tags_list;
     },
     /**
      * Get post info by id
@@ -147,4 +169,4 @@ const AnimePictures = {
 };
 
 export default AnimePictures;
-export type { PostInfo, FullTag };
+export type { PostInfo, FullTag, AutocompleteTag };

@@ -4,6 +4,7 @@
     import LocalValue from "../libs/localStorage";
     import { onMount } from "svelte";
     import type { FullTag } from "../libs/net/AnimePictures";
+import TagsField from "./TagsField.svelte";
 
     let cache: Record<string, FullTag> = {};
     let mode = "off";
@@ -84,22 +85,20 @@ Use number keys to switch between actions.
         <option label="action 8">8</option>
         <option label="action 9">9</option>
     </select>
-    <br>
-    <input id="addInput" 
-        placeholder="tags to add" 
-        bind:value={$action.addTags} 
-        disabled={!enabled}
+    <div class="break" />
+    <TagsField placeholder="tags to add" 
+    bind:value={$action.addTags} 
+    disabled={!enabled}
     />
-    <br>
-    <input id="removeInput" 
-        placeholder="tags to remove" 
+    <div class="break" />
+    <TagsField placeholder="tags to remove" 
         bind:value={$action.removeTags} 
         disabled={!enabled}
     />
 </Block>
 
 <style>
-    select, input {
-        margin-top: 5px;
+    select, .break {
+        margin-top: 10px;
     }
 </style>
