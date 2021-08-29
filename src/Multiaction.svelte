@@ -2,11 +2,14 @@
     import Block from "./Block.svelte";
     import { AnimePictures } from "./ajax.js";
     import type { AnimePicturesFullTag } from "./ajax.js";
-import { onMount } from "svelte";
+    import { onMount } from "svelte";
+    import LocalValue from "./localStorage";
 
     let addTags = "";
     let removeTags = "";
     let cache: Record<string, AnimePicturesFullTag> = {};
+    let mode = "off";
+    let action = new LocalValue(`ma_off`, { addTags: "", removeTags: "" });
 
     export let enabled = false;
     export const apply = async (postId: number) => {
@@ -14,7 +17,9 @@ import { onMount } from "svelte";
             await AnimePictures.addTags(addTags, postId);
         }
         if (removeTags) {
-            const tags = removeTags.split("||").map(name => name.trim().toLocaleLowerCase());
+            const tags = removeTags.split("||")
+                .map(name => name.trim().toLocaleLowerCase())
+                .filter(name => name);
             for (const tagName of tags) {
                 let tag;
                 if (tagName in cache) {
@@ -28,6 +33,15 @@ import { onMount } from "svelte";
         }
     };
 
+    $: {
+        if (mode === "off") {
+            enabled = false;
+        } else {
+            enabled = true;
+            action = new LocalValue(`ma_${mode}`, { addTags: "", removeTags: "" });
+        }
+    }
+
     onMount(() => {
         // @ts-ignore
         new unsafeWindow.AnimePictures.AutoComplete("addInput", "/pictures/autocomplete_tag", true);
@@ -35,18 +49,42 @@ import { onMount } from "svelte";
         new unsafeWindow.AnimePictures.AutoComplete("removeInput", "/pictures/autocomplete_tag", true);
     });
 
-</script>
+    function switchMode(ev: KeyboardEvent) {
+        if (mode === ev.key) {
+            mode = "off";
+        } else if (ev.key.match(/\d/)) {
+            mode = ev.key;
+        }
+    }
 
+</script>
+<svelte:window on:keypress={switchMode} />
 <svelte:options accessors={true} />
 <Block title="Multiactions">
-    <label>
-        <input type="checkbox" bind:checked={enabled}>
-        Enable multiaction
-    </label>
+    <select bind:value={mode}>
+        <option label="disabled">off</option>
+        <option label="action 1">1</option>
+        <option label="action 2">2</option>
+        <option label="action 3">3</option>
+        <option label="action 4">4</option>
+        <option label="action 5">5</option>
+        <option label="action 6">6</option>
+        <option label="action 7">7</option>
+        <option label="action 8">8</option>
+        <option label="action 9">9</option>
+    </select>
     <br>
-    <input id="addInput" placeholder="tags to add" bind:value={addTags} />
+    <input id="addInput" 
+        placeholder="tags to add" 
+        bind:value={$action.addTags} 
+        disabled={!enabled}
+    />
     <br>
-    <input id="removeId" placeholder="tags to remove" bind:value={removeTags} />
+    <input id="removeId" 
+        placeholder="tags to remove" 
+        bind:value={$action.removeTags} 
+        disabled={!enabled}
+    />
 </Block>
 
 <style>
