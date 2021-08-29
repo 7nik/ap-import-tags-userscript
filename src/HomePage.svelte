@@ -8,6 +8,7 @@
 	const dbkey = new LocalValue("dbkey", "");
 	const snkey = new LocalValue("snkey", "");
     let searches = LocalValue.listValues()
+        .sort().reverse()
         .filter((name) => name.startsWith("res_"))
         .map((name) => get(new LocalValue(name, {} as SavedResult)));
 	let form: HTMLFormElement;
