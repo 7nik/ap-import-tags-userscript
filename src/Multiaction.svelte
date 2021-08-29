@@ -91,4 +91,7 @@ Use number keys to switch between actions.
 </Block>
 
 <style>
+    select, input {
+        margin-top: 5px;
+    }
 </style>

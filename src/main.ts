@@ -37,7 +37,7 @@ function startApp () {
 
 // @ts-ignore
 GM.addStyle(`
-    .post_content + .quick_search {
+    .sidebar_block + .quick_search {
         display: none;
     }
 `);
