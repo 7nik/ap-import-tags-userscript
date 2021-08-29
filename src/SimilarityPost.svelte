@@ -80,6 +80,7 @@
         href="/pictures/view_post/{post.id}?lang={lang || "en"}" 
         title="Anime pictures post" 
         target="_blank"
+        rel="opener"
     > </a>
     <div class="db_img">
         <div class="container" >

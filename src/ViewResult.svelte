@@ -1,10 +1,10 @@
 <script lang="ts">
-import type { Result, SavedResult } from "./importer";
-import SimilarityPost from "./SimilarityPost.svelte";
-import PageNavigator from "./PageNavigator.svelte";
-import Multiaction from "./Multiaction.svelte";
-import LocalValue from "./localStorage";
-import { onDestroy } from "svelte";
+    import type { Result, SavedResult } from "./importer";
+    import SimilarityPost from "./SimilarityPost.svelte";
+    import PageNavigator from "./PageNavigator.svelte";
+    import Multiaction from "./Multiaction.svelte";
+    import LocalValue from "./localStorage";
+    import { onDestroy } from "svelte";
 
     export let params = { name: "", page: 0 };
 
@@ -25,8 +25,23 @@ import { onDestroy } from "svelte";
     onDestroy(() => {
         multiaction.$destroy();
     });
+
+    function reply(ev: MessageEvent) {
+        if (ev.data.cmd !== "get_posts_data") return;
+        (ev.source as WindowProxy)?.postMessage({
+            cmd: "posts_data",
+            postsData: {
+                query: null,
+                page: 0,
+                lastPage: 0,
+                postIds: posts.map(post => post.id),
+                lastPost: posts.length-1,
+            },
+        }, location.origin);
+    }
 </script>
 
+<svelte:window on:message={reply} />
 <a href="#/home">&lt; Back</a>
 <div id="posts">
     <div class="center">
