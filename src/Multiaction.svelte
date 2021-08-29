@@ -60,7 +60,10 @@
 </script>
 <svelte:window on:keypress={switchMode} />
 <svelte:options accessors={true} />
-<Block title="Multiactions">
+<Block title="Multiaction" hint="
+Click a post to apply the action to it.
+Use number keys to switch between actions.
+">
     <select bind:value={mode}>
         <option label="disabled">off</option>
         <option label="action 1">1</option>
