@@ -1,13 +1,9 @@
 import { readable, get, Readable, Subscriber } from 'svelte/store';
-import LocalValue from "./localStorage.js";
-import { 
-    AnimePictures, 
-    Danbooru, 
-    SauceNAO, 
-    AnimePicturesPostInfo, 
-    DanbooruPostInfo, 
-    SnrAnimePictures
-} from "./ajax.js"; 
+import LocalValue from "./localStorage";
+import AP from "./net/AnimePictures"; 
+import DB from "./net/Danbooru"; 
+import SN from "./net/SauceNAO"; 
+import type { DanbooruPostInfo } from "./net/Danbooru"; 
 
 type State = {
     progress: number,
@@ -86,7 +82,7 @@ export default class Importer {
         if (!post) {
             // load posts from next page
             this.page += 1;
-            this.posts = await Danbooru.findPosts(this.query, this.page);
+            this.posts = await DB.findPosts(this.query, this.page);
             post = this.posts.pop();
             if (!post) {
                 // it was the last page so save the results
@@ -109,8 +105,8 @@ export default class Importer {
             this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post №${post.id}`;
             if (post.large_file_url) {
                 // @ts-ignore - sometimes SauceNAO fails with post.large_file_url
-                const simRes = await SauceNAO.findClosestOnAnimePictures(post.preview_file_url);
-                const apPost = await AnimePictures.getPostInfo(simRes.data['anime-pictures_id']);
+                const simRes = await SN.findClosestOnAnimePictures(post.preview_file_url);
+                const apPost = await AP.getPostInfo(simRes.data['anime-pictures_id']);
                 if (!this.results.find(({ id }) => id === apPost.id)) {
                     this.results.push({
                         dbLink: `https://danbooru.donmai.us/posts/${post.id}`,
@@ -178,8 +174,8 @@ export default class Importer {
         if (!force) {
             // check whether there are enough search attempts to find all the post
             try {
-                this.stateObj.availableAttempts = await SauceNAO.availableAttempts();
-                this.stateObj.requiredAttempts = await Danbooru.postCount(this.query);
+                this.stateObj.availableAttempts = await SN.availableAttempts();
+                this.stateObj.requiredAttempts = await DB.postCount(this.query);
             } catch (ex) {
                 this.stateObj.error = ex.message;
                 this.saveState();

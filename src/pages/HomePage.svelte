@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Block from "./Block.svelte";
-	import LocalValue from "./localStorage.js";
+	import Block from "../parts/Block.svelte";
+	import LocalValue from "../libs/localStorage";
     import { replace } from "svelte-spa-router"; 
-    import type { SavedResult } from "./importer.js";
     import { get } from 'svelte/store';
+    import type { SavedResult } from "../libs/importer";
 
 	const dbkey = new LocalValue("dbkey", "");
 	const snkey = new LocalValue("snkey", "");

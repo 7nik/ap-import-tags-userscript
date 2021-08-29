@@ -1,7 +1,7 @@
 <script lang="ts">
     import type Multiaction from "./Multiaction.svelte";
-
-    import type { Result } from "./importer.js";
+    import type { Result } from "../libs/importer";
+    
     export let post: Result;
     export let size: "small"|"medium"|"big" = "medium";
     export let multiaction: Multiaction;

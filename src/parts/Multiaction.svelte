@@ -1,9 +1,9 @@
 <script lang="ts">
     import Block from "./Block.svelte";
-    import { AnimePictures } from "./ajax.js";
-    import type { AnimePicturesFullTag } from "./ajax.js";
+    import AP from "../libs/net/AnimePictures";
+    import LocalValue from "../libs/localStorage";
     import { onMount } from "svelte";
-    import LocalValue from "./localStorage";
+    import type { AnimePicturesFullTag } from "../libs/net/AnimePictures";
 
     let cache: Record<string, AnimePicturesFullTag> = {};
     let mode = "off";
@@ -12,7 +12,7 @@
     export let enabled = false;
     export const apply = async (postId: number) => {
         if ($action.addTags) {
-            await AnimePictures.addTags($action.addTags, postId);
+            await AP.addTags($action.addTags, postId);
         }
         if ($action.removeTags) {
             const tags = $action.removeTags.split("||")
@@ -23,10 +23,10 @@
                 if (tagName in cache) {
                     tag = cache[tagName];
                 } else {
-                    tag = await AnimePictures.getTagByName(tagName);
+                    tag = await AP.getTagByName(tagName);
                     cache[tagName] = tag;
                 }
-                if (tag) AnimePictures.removeTag(tag.id, postId);
+                if (tag) AP.removeTag(tag.id, postId);
             }
         }
     };

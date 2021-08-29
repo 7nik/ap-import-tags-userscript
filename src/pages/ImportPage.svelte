@@ -1,6 +1,6 @@
 <script lang="ts" module>
-	import Block from "./Block.svelte";
-	import TagImporter from "./importer.js";
+	import Block from "../parts/Block.svelte";
+	import TagImporter from "../libs/importer";
 	import { replace } from "svelte-spa-router";
 
 	export let params: { query:string }; 

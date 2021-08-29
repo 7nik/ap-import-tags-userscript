@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { Result, SavedResult } from "./importer";
-    import SimilarityPost from "./SimilarityPost.svelte";
-    import PageNavigator from "./PageNavigator.svelte";
-    import Multiaction from "./Multiaction.svelte";
-    import LocalValue from "./localStorage";
+    import SimilarityPost from "../parts/SimilarityPost.svelte";
+    import PageNavigator from "../parts/PageNavigator.svelte";
+    import Multiaction from "../parts/Multiaction.svelte";
+    import LocalValue from "../libs/localStorage";
     import { onDestroy } from "svelte";
+    import type { Result, SavedResult } from "../libs/importer";
 
     export let params = { name: "", page: 0 };
 

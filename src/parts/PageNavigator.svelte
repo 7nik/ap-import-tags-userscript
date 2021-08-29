@@ -1,6 +1,4 @@
 <script lang="ts">
-    import type { Writable } from "svelte/store";
-
     export let pageCount: number;
     export let currPage: number;
     export let baseUrl = "";

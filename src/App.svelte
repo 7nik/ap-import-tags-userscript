@@ -1,13 +1,13 @@
 <script lang="ts">
-	import HomePage from "./HomePage.svelte";
-	import ImportPage from "./ImportPage.svelte";
+	import HomePage from "./pages/HomePage.svelte";
+	import ImportPage from "./pages/ImportPage.svelte";
+	import ViewResultsPage from "./pages/ViewResultsPage.svelte";
 	import Router from "svelte-spa-router";
-	import ViewResult from "./ViewResult.svelte";
 
 	const routes = {
 		"/home": HomePage,
 		"/import/:query": ImportPage,
-		"/res/:name/:page": ViewResult,
+		"/res/:name/:page": ViewResultsPage,
 		"*": HomePage,
 	};
 </script>
