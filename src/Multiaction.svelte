@@ -50,6 +50,16 @@
     });
 
     function switchMode(ev: KeyboardEvent) {
+        const focusElem = document.activeElement;
+        // return if it is just text typing
+        if (ev.ctrlKey || ev. altKey || ev.shiftKey
+            || focusElem?.tagName === "TEXTAREA"
+            || (focusElem?.tagName === "INPUT"
+                && (focusElem as HTMLInputElement).type !== "button"
+                && (focusElem as HTMLInputElement).type !== "submit")
+        ) {
+            return;
+        }
         if (mode === ev.key) {
             mode = "off";
         } else if (ev.key.match(/\d/)) {
