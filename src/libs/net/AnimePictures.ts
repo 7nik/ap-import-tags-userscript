@@ -1,8 +1,9 @@
 import { get, post } from "./ajax";
     
 type timestamp = string;
+type Number = number | ("0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9")[0];
 
-type PostInfo = {
+type ShortPostInfo = {
     id: number,
     md5: string,
     md5_pixels: string,
@@ -21,8 +22,11 @@ type PostInfo = {
     ext: ".jpg"|".jpeg"|".png"|".gif",
     status: 0|-2|1|2, // new|pre|published|banned
     spoiler: boolean, // presense of the spoiler tag
-    have_alpha: boolean, // presence the alpha channel?
+    have_alpha: boolean, // presence the alpha channel
     tags_count: number,
+}
+
+type PostInfo = ShortPostInfo & {
     user_name: string, // uploader
     user_id: number, // uploader
     user_avatar: string, // uploader avatar
@@ -77,6 +81,24 @@ type AutocompleteTag = {
 
 type AutocompleteTagResult = {
     tags_list: AutocompleteTag[],
+}
+
+type SearchPostsResultRaw = {
+    exclusive_tag: FullTag | null, // if searched by one tag, contains the tag
+    posts_per_page: number, // max posts per page
+    response_posts_count: number, // length of `posts`
+    page_number: number, // current page number
+    posts: PostInfo[],
+    posts_count: number, // approximate total number of posts
+    max_pages: number, // number of the last page
+}
+
+type SearchPostsResult = {
+    searchedTag: FullTag | null, // if searched by one tag, contains the tag
+    currentPage: number, // current page number
+    posts: PostInfo[],
+    totalPosts: number, // approximate total number of posts
+    totalPages: number, // total number of the pages
 }
 
 const AnimePictures = {
@@ -149,6 +171,95 @@ const AnimePictures = {
             return await this.getTagById(res.tags[0].alias);
         }
         return res.tags[0];
+    },
+    /**
+     * Search posts
+     * @param  {number} pageNum - Number of a page result
+     * @param  {Object} params - Option of the search
+     * @return {Promise<SearchPostsResult>} - JSON response
+     */
+    async searchPosts (
+        pageNum: number, 
+        params: Partial<{
+            searchTags: string, // search query
+            excludeTags: string, // tags to exclude
+            favoriteBy: Number, // favorited by given user
+            favoriteFolder: string, // folder name, requires `favoriteBy`
+            width: Number, // image width
+            height: Number, // image height
+            wider: boolean, // if set: true: >=width, false: <=width; requires `width`
+            taller: boolean, // if set: true: >=height, false: <=height; requires `height`
+            aspectRatio: Number, // number (e.g. 1.78) or fraction (e.g. "3:4")
+            order: "date"|"dateRev"|"stars"|"views"|"fileSize"|"tagNum",
+            maxAge: "off"|"1w"|"1m"|"1d"|"6m"|"1y"|"2y"|"3y",
+            smallPreview: boolean, // affects only original UI
+            excludeModerImages: boolean, // exclude moderator's images
+            jpgImages: boolean, // only jpeg
+            pngImages: boolean, // only png
+            gifImages: boolean, // only gif
+            imageColor: [number, number, number], // average color of image
+            imageColorDeviation: number, // deviation of the image color
+            since: number, // post published since given date
+            uploaderId: Number, // filter by uploader
+            preStatus: boolean, // `pre` or nothing
+            staredBy: Number, // posts starred by given user
+        }>,
+    ): Promise<SearchPostsResult> {
+        const queryParams: Record<string, number|string|null|undefined> = { 
+            type: "json",
+            search_tag: params.searchTags,
+            denied_tags: params.excludeTags,
+            favorite_by: params.favoriteBy,
+            favorite_folder: params.favoriteFolder,
+            res_x: params.width,
+            res_y: params.height,
+            res_x_n: params.wider ? 1 : params.wider === false ? 0 : null,
+            res_y_n: params.taller ? 1 : params.taller === false ? 0 : null,
+            aspect: params.aspectRatio,
+            order_by: {
+                date: "date",
+                dateRev: "date_r",
+                stars: "rating",
+                views: "views",
+                fileSize: "size",
+                tagNum: "tag_num",
+                default: null,
+            }[params.order ?? "default"],
+            ldate: {
+                off: 0,
+                "1w": 1,
+                "1m": 2,
+                "1d": 3,
+                "6m": 4,
+                "1y": 5,
+                "2y": 6,
+                "3y": 7,
+                default: null,
+            }[params.maxAge ?? "default"],
+            small_prev: params.smallPreview ? 1 : null,
+            dmi: params.excludeModerImages ? 1 : null,
+            ext_jpg: params.jpgImages ? "jpg" : null,
+            ext_png: params.pngImages ? "png" : null,
+            ext_gif: params.gifImages ? "gif" : null,
+            color: params.imageColor 
+                ? params.imageColor.concat(params.imageColorDeviation ?? 150).join("_")
+                : null,
+            view_after: params.since,
+            user: params.uploaderId,
+            status: params.preStatus ? "pre" : null,
+            stars_by: params.staredBy,
+        };
+        Reflect.ownKeys(queryParams).forEach((key) => {
+            if (queryParams[key as string] == null) delete queryParams[key as string];
+        })
+        const res: SearchPostsResultRaw = await get(`https://anime-pictures.net/pictures/view_posts/${pageNum}`, queryParams as Record<string, string>);
+        return {
+            searchedTag: res.exclusive_tag,
+            currentPage: res.page_number,
+            posts: res.posts,
+            totalPosts: res.posts_count,
+            totalPages: res.max_pages + 1,
+        };
     },
     /**
      * Delete a tag from a post, requires rights base on post status:

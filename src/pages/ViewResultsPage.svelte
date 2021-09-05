@@ -8,14 +8,15 @@
 
     export let params = { name: "", page: 0 };
 
+    const pageSize = new LocalValue("pageSize", 20);
     const result = new LocalValue(`res_${params.name}`, {} as SavedResult);
-    const pageCount = Math.ceil($result.results.length/20);
+    const pageCount = Math.ceil($result.results.length/$pageSize);
     const baseUrl = `#/res/${$result.date}/`;
     let posts: Result[];
     let currPage: number;
     $: {
         currPage = +params.page;
-        posts = $result.results.slice(currPage*20, (currPage+1)*20);
+        posts = $result.results.slice(currPage*$pageSize, (currPage+1)*$pageSize);
     }
     
     const multiaction = new Multiaction({
