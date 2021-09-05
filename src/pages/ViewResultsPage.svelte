@@ -66,7 +66,7 @@ post size: <select bind:value={postSize}>
     <PageNavigator {baseUrl} {currPage} {pageCount} />
     <div style="--post-size: {postSize}px">
         {#each posts as post (post.id)}
-            <svelte:component this={PostBlock} {post} {multiaction} {postSize}/>
+            <svelte:component this={PostBlock} {post} {postSize} {multiaction} />
         {/each}
     </div>
     <PageNavigator {baseUrl} {currPage} {pageCount} />

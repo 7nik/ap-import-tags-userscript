@@ -35,7 +35,7 @@
     }
 </script>
 
-<span class="post" class:pending on:click={handleClick}>
+<span class="post" class:pending>
     <div class="img_block_text" style="
         opacity: 1;
         background-image: linear-gradient(to right, transparent, rgb({post.color}), transparent);
@@ -57,12 +57,14 @@
         href={post.dbLink} 
         title="Danbooru post" 
         target="_blank"
+        on:click={handleClick}
     > </a>
     <a class="ap_link" 
         href="/pictures/view_post/{post.id}?lang={lang || "en"}" 
         title="Anime pictures post" 
         target="_blank"
         rel="opener"
+        on:click={handleClick}
     > </a>
     <div class="db_img">
         <div class="container" >

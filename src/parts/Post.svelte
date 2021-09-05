@@ -34,11 +34,12 @@
     }
 </script>
 
-<span class="post" class:pending on:click={handleClick}>
+<span class="post" class:pending>
     <a href="/pictures/view_post/{post.id}?lang={lang}" 
         title="Anime pictures {post.width}x{post.height}" 
         target="_blank"
         rel="opener"
+        on:click={handleClick}
     >
         <!-- svelte-ignore a11y-missing-attribute -->
         <img src="{imgSrc}">
@@ -69,6 +70,10 @@
         margin: 3px;
         width: var(--post-size);
         height: var(--post-size);
+    }
+    a {
+        height: var(--post-size);
+        display: block;
     }
     img {
         max-width: var(--post-size);
