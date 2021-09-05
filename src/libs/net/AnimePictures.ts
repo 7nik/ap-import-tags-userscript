@@ -1,7 +1,6 @@
 import { get, post } from "./ajax";
     
 type timestamp = string;
-type Number = number | ("0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9")[0];
 
 type ShortPostInfo = {
     id: number,
@@ -183,13 +182,13 @@ const AnimePictures = {
         params: Partial<{
             searchTags: string, // search query
             excludeTags: string, // tags to exclude
-            favoriteBy: Number, // favorited by given user
+            favoriteBy: number, // favorited by given user
             favoriteFolder: string, // folder name, requires `favoriteBy`
-            width: Number, // image width
-            height: Number, // image height
+            width: number, // image width
+            height: number, // image height
             wider: boolean, // if set: true: >=width, false: <=width; requires `width`
             taller: boolean, // if set: true: >=height, false: <=height; requires `height`
-            aspectRatio: Number, // number (e.g. 1.78) or fraction (e.g. "3:4")
+            aspectRatio: number | string, // number (e.g. 1.78) or fraction (e.g. "3:4")
             order: "date"|"dateRev"|"stars"|"views"|"fileSize"|"tagNum",
             maxAge: "off"|"1w"|"1m"|"1d"|"6m"|"1y"|"2y"|"3y",
             smallPreview: boolean, // affects only original UI
@@ -200,9 +199,9 @@ const AnimePictures = {
             imageColor: [number, number, number], // average color of image
             imageColorDeviation: number, // deviation of the image color
             since: number, // post published since given date
-            uploaderId: Number, // filter by uploader
+            uploaderId: number, // filter by uploader
             preStatus: boolean, // `pre` or nothing
-            staredBy: Number, // posts starred by given user
+            staredBy: number, // posts starred by given user
         }>,
     ): Promise<SearchPostsResult> {
         const queryParams: Record<string, number|string|null|undefined> = { 
