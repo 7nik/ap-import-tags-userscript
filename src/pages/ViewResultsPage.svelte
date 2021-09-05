@@ -1,5 +1,6 @@
 <script lang="ts">
     import SimilarityPost from "../parts/SimilarityPost.svelte";
+    import Post from "../parts/Post.svelte";
     import PageNavigator from "../parts/PageNavigator.svelte";
     import Multiaction from "../parts/Multiaction.svelte";
     import LocalValue from "../libs/localStorage";
@@ -18,6 +19,10 @@
         currPage = +params.page;
         posts = $result.results.slice(currPage*$pageSize, (currPage+1)*$pageSize);
     }
+
+    let postSize = "300";
+    let showSource = true;
+    $: PostBlock = showSource ? SimilarityPost : Post;
     
     const multiaction = new Multiaction({
         target: document.getElementById("sidebar") ?? document.body,
@@ -43,27 +48,32 @@
 </script>
 
 <svelte:window on:message={reply} />
-<a href="#/home">&lt; Back</a>
+<a href="#/home">&lt; Go back</a>
+<br>
+<label>
+    <input type="checkbox" bind:checked={showSource}>
+    show the source image,
+</label>
+post size: <select bind:value={postSize}>
+    <option label="small">150</option>
+    <option label="medium">300</option>
+    <option label="big">500</option>
+</select>
 <div id="posts">
-    <div class="center">
-        <div class="header">
-            Search results: {$result.results.length} pictures
-        </div>
-        <PageNavigator {baseUrl} {currPage} {pageCount} />
-        <div class="cetner posts_block">
-            {#each posts as post (post.id)}
-                <SimilarityPost {post} {multiaction}/>
-            {/each}
-        </div>
-        <PageNavigator {baseUrl} {currPage} {pageCount} />
+    <div class="header">
+        Search results: {$result.results.length} pictures
     </div>
+    <PageNavigator {baseUrl} {currPage} {pageCount} />
+    <div style="--post-size: {postSize}px">
+        {#each posts as post (post.id)}
+            <svelte:component this={PostBlock} {post} {multiaction} {postSize}/>
+        {/each}
+    </div>
+    <PageNavigator {baseUrl} {currPage} {pageCount} />
 </div>
 
 <style>
     #posts {
         margin-top: -4px;
-    }
-    .center {
-        text-align: center;
     }
 </style>

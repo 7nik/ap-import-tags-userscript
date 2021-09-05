@@ -1,6 +1,6 @@
 import { readable, Readable } from 'svelte/store';
 import LocalValue from "./localStorage";
-import AP from "./net/AnimePictures"; 
+import AP, { ShortPostInfo } from "./net/AnimePictures"; 
 import DB from "./net/Danbooru"; 
 import SN from "./net/SauceNAO"; 
 import type { PostInfo } from "./net/Danbooru"; 
@@ -14,20 +14,11 @@ type State = {
     error: string | null;
     status: string;
 };
-type Result = {
+type Result = ShortPostInfo & {
     dbLink: string,
-    dbImg: string,
+    dbLarge: string,
+    dbPreview: string,
     sim: number|string,
-    id: number,
-    link: string,
-    preview: string,
-    width: number,
-    height: number,
-    erotics: 0|1|2|3,
-    color: [number, number, number],
-    status: 0|-2|1|2,
-    tagsCount: number,
-
 };
 type SavedResult = {
     query: string,
@@ -109,18 +100,30 @@ export default class Importer {
                 const apPost = await AP.getPostInfo(simRes.data['anime-pictures_id']);
                 if (!this.results.find(({ id }) => id === apPost.id)) {
                     this.results.push({
-                        dbLink: `https://danbooru.donmai.us/posts/${post.id}`,
-                        dbImg:  post.large_file_url,
-                        sim:    simRes.header.similarity,
-                        id:     simRes.data['anime-pictures_id'],
-                        link:   simRes.data.ext_urls[0],
-                        preview:    apPost.medium_preview,
-                        width:      apPost.width,
-                        height:     apPost.height,
-                        erotics:    apPost.erotics,
-                        color:      apPost.color,
-                        status:     apPost.status,
-                        tagsCount:  apPost.tags_count,
+                        dbLink:         `https://danbooru.donmai.us/posts/${post.id}`,
+                        dbLarge:        post.large_file_url,
+                        dbPreview:      post.preview_file_url ?? "",
+                        sim:            simRes.header.similarity,
+                        id:             apPost.id,
+                        md5:            apPost.md5,
+                        md5_pixels:     apPost.md5_pixels,
+                        width:          apPost.width,
+                        height:         apPost.height,
+                        small_preview:  apPost.small_preview,
+                        medium_preview: apPost.medium_preview,
+                        big_preview:    apPost.big_preview,
+                        pubtim:         apPost.pubtim,
+                        score:          apPost.score,
+                        score_number:   apPost.score_number,
+                        size:           apPost.size,
+                        download_count: apPost.download_count,
+                        erotics:        apPost.erotics,
+                        color:          apPost.color,
+                        ext:            apPost.ext,
+                        status:         apPost.status,
+                        spoiler:        apPost.spoiler,
+                        have_alpha:     apPost.have_alpha,
+                        tags_count:     apPost.tags_count,
                     });
                 }
             } else {

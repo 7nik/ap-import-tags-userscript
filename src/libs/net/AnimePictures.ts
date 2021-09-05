@@ -279,4 +279,4 @@ const AnimePictures = {
 };
 
 export default AnimePictures;
-export type { PostInfo, FullTag, AutocompleteTag };
+export type { PostInfo, ShortPostInfo, FullTag, AutocompleteTag };
