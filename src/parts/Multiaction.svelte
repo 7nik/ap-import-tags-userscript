@@ -59,7 +59,7 @@ import TagsField from "./TagsField.svelte";
         ) {
             return;
         }
-        if (mode === ev.key) {
+        if (ev.key === "Escape") {
             mode = "off";
         } else if (ev.key.match(/\d/)) {
             mode = ev.key;
@@ -67,11 +67,11 @@ import TagsField from "./TagsField.svelte";
     }
 
 </script>
-<svelte:window on:keypress={switchMode} />
+<svelte:window on:keydown={switchMode} />
 <svelte:options accessors={true} />
 <Block title="Multiaction" hint="
-Click a post to apply the action to it.
-Use number keys to switch between actions.
+Click a post to apply the selected action to it.
+Use numerical and Esc keys to switch between actions.
 ">
     <select bind:value={mode}>
         <option label="disabled">off</option>
