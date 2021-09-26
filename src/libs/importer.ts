@@ -95,7 +95,6 @@ export default class Importer {
         try {
             this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post №${post.id}`;
             if (post.large_file_url) {
-                // @ts-ignore - sometimes SauceNAO fails with post.large_file_url
                 const simRes = await SN.searchOnAnimePictures(post.preview_file_url);
                 for (const res of simRes) {
                     const apPost = await AP.getPostInfo(res.data['anime-pictures_id']);
@@ -127,7 +126,7 @@ export default class Importer {
                             tags_count:     apPost.tags_count,
                         });
                     }
-                }
+                } 
             } else {
                 if (post.is_banned) {
                     console.warn("\nBanned picture", {

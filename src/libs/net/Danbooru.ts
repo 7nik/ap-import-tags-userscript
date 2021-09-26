@@ -10,8 +10,7 @@ type BadResponse = {
     backtrace: string[],
 }
 
-type PostInfo = {
-    id?: number, // in case loli/shota is hidden for anons and regular users
+type BasePostInfo = {
     created_at: timestamp, // RFC 3339 format
     uploader_id: number,
     updated_at: timestamp,
@@ -22,16 +21,11 @@ type PostInfo = {
     score: number,
     source: string|null,
     pixiv_id: number|null,
-    md5?: string, // same case as with id
     rating: "s"|"q"|"e"|null,
     image_width: number,
     image_height: number,
     fav_count: number,
-    file_ext?: string, // same
     file_size: number,
-    file_url?: string, // full link to original; same case as with id
-    large_file_url?: string, // 850px width or original; same
-    preview_file_url?: string, // 150px biggest side; same
     parent_id: number|null,
     has_children: boolean,
     has_active_children: boolean,
@@ -61,6 +55,21 @@ type PostInfo = {
     is_status_locked: boolean,
     bit_flags: number,
 }
+
+// this info isn't provided if an anon or regular user attempts to get
+// a post which is banned or tagged as loli/shota
+type ExtraPostInfo =  {
+    id: number, 
+    md5: string,
+    file_ext: string,
+    file_url: string, // full link to original
+    large_file_url: string, // 850px width ver or original
+    preview_file_url: string, // 150px of the biggest side
+}
+
+type OptinalPart<T> = T | Partial<Record<keyof T, undefined>>
+
+type PostInfo = BasePostInfo & OptinalPart<ExtraPostInfo>;
 
 type PostCount = {
     counts: {
