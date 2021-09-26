@@ -1,8 +1,6 @@
 <script lang="ts">
-import type { AutocompleteTag } from "../libs/net/AnimePictures";
-import AP from "../libs/net/AnimePictures";
-
-
+    import type { AutocompleteTag } from "../libs/net/AnimePictures";
+    import AP from "../libs/net/AnimePictures";
 
     export let placeholder = "";
     export let autoAppend = false;
@@ -12,13 +10,10 @@ import AP from "../libs/net/AnimePictures";
 
     let tags: (AutocompleteTag&{name:string})[] = [];
     let selTag: (AutocompleteTag&{name:string})|null = null;
-    let show = false;
     let focused = false;
-    $: {
-        show = focused && tags.length > 0;
-    }
+    $: show = focused && tags.length > 0;
 
-    function getLastDelimPos () {
+    function getLastDelimPos (): number {
         const pos = Math.max(value.lastIndexOf("||"), value.lastIndexOf("&&"));
         return pos < 0 ? 0 : pos + 2;
     }
@@ -39,25 +34,33 @@ import AP from "../libs/net/AnimePictures";
     }
 
     function selectTag (ev: KeyboardEvent) {
+        // choose the selected tag
         if (ev.key === "ArrowRight" || ev.key === "Tab") {
-            if (autoAppend) value += appendix;
-            tags = [];
-            ev.preventDefault();
-        } else if (ev.key === "ArrowDown") {
-            if (!selTag) {
-                selTag = tags[0];
-            } else {
-                selTag = tags[tags.indexOf(selTag)+1] ?? tags[tags.length-1];
-            }
-            const pos = getLastDelimPos();
-            value = (pos ?  value.slice(0, pos) : "") + (selTag?.name ?? "");
-        } else if (ev.key === "ArrowUp") {
             if (selTag) {
-                selTag = tags[tags.indexOf(selTag)-1] ?? tags[0];
-                const pos = getLastDelimPos();
-                value = (pos ?  value.slice(0, pos) : "") + (selTag?.name ?? "");
+                if (autoAppend) value += appendix;
+                tags = [];
+                selTag = null;
+                (ev.target as HTMLInputElement).selectionStart = 
+                    (ev.target as HTMLInputElement).selectionEnd = value.length;
+                ev.preventDefault();
             }
+            return;
         }
+        // select another tag
+        if (ev.key === "ArrowDown") {
+            selTag = selTag 
+                ? tags[Math.min(tags.indexOf(selTag)+1, tags.length-1)]
+                : tags[0];
+        } else if (ev.key === "ArrowUp") {
+            selTag = selTag 
+                ? tags[Math.max(tags.indexOf(selTag)-1, 0)]
+                : tags[tags.length-1];
+        } else {
+            return;
+        }
+        // display the selected tag in the field
+        const pos = getLastDelimPos();
+        value = (pos ?  value.slice(0, pos) : "") + (selTag?.name ?? "");
     }
 
 </script>
@@ -74,7 +77,7 @@ import AP from "../libs/net/AnimePictures";
     />
     <ul class="autocomplite" class:show>
         {#each tags as tag }
-            <li class="cat-{tag.c} {tag === selTag ? "autocomplite_active" : ""}">
+            <li class="cat-{tag.c}" class:autocomplite_active="{tag === selTag}">
                 {@html tag.t2 ? `${tag.t} → ${tag.t2}` : tag.t}
             </li>
         {/each}
