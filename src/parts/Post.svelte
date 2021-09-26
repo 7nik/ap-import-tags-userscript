@@ -71,7 +71,7 @@
         width: var(--post-size);
         height: var(--post-size);
     }
-    a {
+    span > a {
         height: var(--post-size);
         display: block;
     }
