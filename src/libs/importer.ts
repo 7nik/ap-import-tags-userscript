@@ -18,7 +18,7 @@ type Result = ShortPostInfo & {
     dbLink: string,
     dbLarge: string,
     dbPreview: string,
-    sim: number|string,
+    sim: number,
 };
 type SavedResult = {
     query: string,
@@ -96,35 +96,37 @@ export default class Importer {
             this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post №${post.id}`;
             if (post.large_file_url) {
                 // @ts-ignore - sometimes SauceNAO fails with post.large_file_url
-                const simRes = await SN.findClosestOnAnimePictures(post.preview_file_url);
-                const apPost = await AP.getPostInfo(simRes.data['anime-pictures_id']);
-                if (!this.results.find(({ id }) => id === apPost.id)) {
-                    this.results.push({
-                        dbLink:         `https://danbooru.donmai.us/posts/${post.id}`,
-                        dbLarge:        post.large_file_url,
-                        dbPreview:      post.preview_file_url ?? "",
-                        sim:            simRes.header.similarity,
-                        id:             apPost.id,
-                        md5:            apPost.md5,
-                        md5_pixels:     apPost.md5_pixels,
-                        width:          apPost.width,
-                        height:         apPost.height,
-                        small_preview:  apPost.small_preview,
-                        medium_preview: apPost.medium_preview,
-                        big_preview:    apPost.big_preview,
-                        pubtim:         apPost.pubtim,
-                        score:          apPost.score,
-                        score_number:   apPost.score_number,
-                        size:           apPost.size,
-                        download_count: apPost.download_count,
-                        erotics:        apPost.erotics,
-                        color:          apPost.color,
-                        ext:            apPost.ext,
-                        status:         apPost.status,
-                        spoiler:        apPost.spoiler,
-                        have_alpha:     apPost.have_alpha,
-                        tags_count:     apPost.tags_count,
-                    });
+                const simRes = await SN.searchOnAnimePictures(post.preview_file_url);
+                for (const res of simRes) {
+                    const apPost = await AP.getPostInfo(res.data['anime-pictures_id']);
+                    if (!this.results.find(({ id }) => id === apPost.id)) {
+                        this.results.push({
+                            dbLink:         `https://danbooru.donmai.us/posts/${post.id}`,
+                            dbLarge:        post.large_file_url,
+                            dbPreview:      post.preview_file_url ?? "",
+                            sim:            +res.header.similarity,
+                            id:             apPost.id,
+                            md5:            apPost.md5,
+                            md5_pixels:     apPost.md5_pixels,
+                            width:          apPost.width,
+                            height:         apPost.height,
+                            small_preview:  apPost.small_preview,
+                            medium_preview: apPost.medium_preview,
+                            big_preview:    apPost.big_preview,
+                            pubtim:         apPost.pubtim,
+                            score:          apPost.score,
+                            score_number:   apPost.score_number,
+                            size:           apPost.size,
+                            download_count: apPost.download_count,
+                            erotics:        apPost.erotics,
+                            color:          apPost.color,
+                            ext:            apPost.ext,
+                            status:         apPost.status,
+                            spoiler:        apPost.spoiler,
+                            have_alpha:     apPost.have_alpha,
+                            tags_count:     apPost.tags_count,
+                        });
+                    }
                 }
             } else {
                 if (post.is_banned) {

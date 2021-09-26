@@ -348,20 +348,25 @@ type AutoResult<id> =
     id extends 999 ? AnyResult :
     never;
 
-type ErrorResult = {
-    header: {
-        user_id?: textNumber,
-        account_type?: textNumber,
-        short_limit?: textNumber,
-        long_limit?: textNumber,
-        long_remaining?: number,
-        short_remaining?: number,
-        results_requested?: number,
-        // in case anon error or run out error only these two field presented
-        status: -1, // in fact can be any non-zero value
-        message: string, // error message
+type ErrorResult = Exclude<
+    {
+        header: {
+            user_id?: textNumber,
+            account_type?: textNumber,
+            short_limit?: textNumber,
+            long_limit?: textNumber,
+            long_remaining?: number,
+            short_remaining?: number,
+            results_requested?: number,
+            // in case anon error or run out error only these two field presented
+            status: number, // any non-zero value
+            message: string, // error message
+        }
+    }, 
+    {
+        header: { status: 0 }
     }
-}
+>
 
 type Response<dbID extends number> = {
     header: {
@@ -433,13 +438,14 @@ async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Res
 
 const SauceNAO = {
     /**
-     * Find the most similar picture to a given one on Anime-Pictures
+     * Find pictures on Anime-Pictures that are similar to the given one
      * @param {string} url - Picture to search 
-     * @returns {Promise<AnimePicturesResult>} The best match
+     * @param {number} threshold - Minimal similarity of results 
+     * @returns {Promise<AnimePicturesResult[]>} The found pictures
      */
-    async findClosestOnAnimePictures (url: string): Promise<AnimePicturesResult> {
-        const res = await saucenao({ url, db: 28, numres: 1 });
-        return res.results[0];
+    async searchOnAnimePictures (url: string, threshold: number = 50): Promise<AnimePicturesResult[]> {
+        const res = await saucenao({ url, db: 28, numres: 10 });
+        return res.results.filter((res) => +res.header.similarity >= threshold);
     },
     /**
      * Get number of avaivable daily attempts to search (cost 1 attempt)
