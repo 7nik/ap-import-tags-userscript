@@ -5,9 +5,9 @@ type FetchFunc = (url: string, params: RequestInit) => Promise<Response>;
 const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time));
 
 /**
- * A fetch-like functoin that work over GM.XHR
+ * A fetch-like function that works over GM.XHR
  * @param {string} url - Full URL of the request 
- * @param {Params} params - Other params of the function 
+ * @param {RequestInit} params - Other params of the function 
  * @returns {Promise<Response>} Response object of the same type as fetch's
  */
 async function gmFetch (url: string, params: RequestInit = {}): Promise<Response> {
@@ -47,7 +47,14 @@ async function gmFetch (url: string, params: RequestInit = {}): Promise<Response
 async function query (fetch: FetchFunc, url: string, params: RequestInit = {}): Promise<Response> {
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         try {
-            return await fetch(url, params);
+            const resp = await fetch(url, params);
+            // the 5xx reponse may be done by Cloudflare which sents HTML and
+            // attempt to parse it as JSON will throw error
+            if (resp.status >= 500) {
+                console.warn(url, `\nServer responded with ${resp.status} code. ${nth} attempt`);
+                await sleep(5000);
+                continue;
+            }
         } catch (ex) {
             console.warn(ex, url, `\nFetch error. ${nth} attempt`);
             await sleep(5000);
@@ -64,7 +71,7 @@ async function query (fetch: FetchFunc, url: string, params: RequestInit = {}): 
  * @param {boolean} useGMXHR - use GM.XHR or fetch
  * @returns Promise<any> - JSON response
  */
-async function get (url: string, params: Params = {}, useGMXHR = false): Promise<any> {
+async function get (url: string, params: Params = {}, useGMXHR: boolean = false): Promise<any> {
     const link = new URL(url);
     Object.entries(params).forEach(
         ([key, value]) => link.searchParams.append(key, value.toString())
@@ -87,7 +94,7 @@ async function get (url: string, params: Params = {}, useGMXHR = false): Promise
  * @param {boolean} useGMXHR - use GM.XHR or fetch
  * @returns Promise<any> - JSON response
  */
-async function post (url: string, params: Params = {}, useGMXHR = false): Promise<any>{
+async function post (url: string, params: Params = {}, useGMXHR: boolean = false): Promise<any>{
     const func = useGMXHR ? gmFetch : fetch;
     const body: RequestInit = { method: "POST" };
     if (params) {
