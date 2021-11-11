@@ -101,8 +101,10 @@ export default class Importer {
                     if (!this.results.find(({ id }) => id === apPost.id)) {
                         this.results.push({
                             dbLink:         `https://danbooru.donmai.us/posts/${post.id}`,
-                            dbLarge:        post.large_file_url,
-                            dbPreview:      post.preview_file_url ?? "",
+                            dbLarge:        ["jpg", "jpeg", "png", "gif"].includes(post.file_ext)
+                                                ? post.large_file_url
+                                                : post.preview_file_url,
+                            dbPreview:      post.preview_file_url,
                             sim:            +res.header.similarity,
                             id:             apPost.id,
                             md5:            apPost.md5,
@@ -149,7 +151,7 @@ export default class Importer {
                     console.log("No preview", post);
                 }
             }
-        } catch (ex) {
+        } catch (ex: any) {
             console.error(post, ex);
             this.stateObj.error = ex.message;
             this.stateObj.paused = true;
@@ -180,7 +182,7 @@ export default class Importer {
             try {
                 this.stateObj.availableAttempts = await SN.availableAttempts();
                 this.stateObj.requiredAttempts = await DB.postCount(this.query);
-            } catch (ex) {
+            } catch (ex: any) {
                 this.stateObj.error = ex.message;
                 this.saveState();
                 throw ex;
