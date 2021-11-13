@@ -33,9 +33,15 @@
         selTag = null;
     }
 
-    function selectTag (ev: KeyboardEvent) {
+    function selectTag (ev: KeyboardEvent | MouseEvent) {
+        // choose the clicked tag
+        if (ev instanceof MouseEvent) {
+            const elem = (ev.target as HTMLElement).closest("li");
+            const list = elem?.parentNode?.children;
+            if (!elem || !list) return;
+            selTag = tags[[...list].indexOf(elem)];
         // choose the selected tag
-        if (ev.key === "ArrowRight" || ev.key === "Tab") {
+        } else if (ev.key === "ArrowRight" || ev.key === "Tab") {
             if (selTag) {
                 if (autoAppend) value += appendix;
                 tags = [];
@@ -45,9 +51,8 @@
                 ev.preventDefault();
             }
             return;
-        }
-        // select another tag
-        if (ev.key === "ArrowDown") {
+            // select another tag
+        } else if (ev.key === "ArrowDown") {
             selTag = selTag 
                 ? tags[Math.min(tags.indexOf(selTag)+1, tags.length-1)]
                 : tags[0];
@@ -77,7 +82,11 @@
     />
     <ul class="autocomplite" class:show>
         {#each tags as tag }
-            <li class="cat-{tag.c}" class:autocomplite_active="{tag === selTag}">
+            <li 
+                class="cat-{tag.c}" 
+                class:autocomplite_active="{tag === selTag}"
+                on:mousedown={selectTag}
+            >
                 {@html tag.t2 ? `${tag.t} → ${tag.t2}` : tag.t}
             </li>
         {/each}
