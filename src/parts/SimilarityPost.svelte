@@ -3,7 +3,7 @@
     import type { Result } from "../libs/importer";
     
     export let post: Result;
-    export let postSize: string = "300";
+    export let postSize: "150"|"300"|"500" = "300";
     export let multiaction: Multiaction;
 
     $: apImg = postSize === "150"

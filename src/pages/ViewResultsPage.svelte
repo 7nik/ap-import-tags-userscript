@@ -22,7 +22,7 @@
 
     let postSize = new LocalValue("postSize", "300");
     let showSource = new LocalValue("showSource", true);
-    $: PostBlock = showSource ? SimilarityPost : Post;
+    $: PostBlock = $showSource ? SimilarityPost : Post;
     
     const multiaction = new Multiaction({
         target: document.getElementById("sidebar") ?? document.body,
@@ -51,10 +51,10 @@
 <a href="#/home">&lt; Go back</a>
 <br>
 <label>
-    <input type="checkbox" bind:checked={showSource}>
+    <input type="checkbox" bind:checked={$showSource}>
     show the source image,
 </label>
-post size: <select bind:value={postSize}>
+post size: <select bind:value={$postSize}>
     <option label="small">150</option>
     <option label="medium">300</option>
     <option label="big">500</option>
@@ -64,9 +64,9 @@ post size: <select bind:value={postSize}>
         Search results: {$result.results.length} pictures
     </div>
     <PageNavigator {baseUrl} {currPage} {pageCount} />
-    <div style="--post-size: {postSize}px">
+    <div style="--post-size: {$postSize}px">
         {#each posts as post (post.id)}
-            <svelte:component this={PostBlock} {post} {postSize} {multiaction} />
+            <svelte:component this={PostBlock} {post} postSize={$postSize} {multiaction} />
         {/each}
     </div>
     <PageNavigator {baseUrl} {currPage} {pageCount} />
