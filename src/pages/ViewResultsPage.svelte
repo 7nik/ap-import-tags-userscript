@@ -20,8 +20,8 @@
         posts = $result.results.slice(currPage*$pageSize, (currPage+1)*$pageSize);
     }
 
-    let postSize = "300";
-    let showSource = true;
+    let postSize = new LocalValue("postSize", "300");
+    let showSource = new LocalValue("showSource", true);
     $: PostBlock = showSource ? SimilarityPost : Post;
     
     const multiaction = new Multiaction({
