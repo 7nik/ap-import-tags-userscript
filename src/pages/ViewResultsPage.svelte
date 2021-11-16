@@ -5,19 +5,23 @@
     import Multiaction from "../parts/Multiaction.svelte";
     import LocalValue from "../libs/localStorage";
     import { onDestroy } from "svelte";
+    import { get } from "svelte/store";
     import type { Result, SavedResult } from "../libs/importer";
 
     export let params = { name: "", page: 0 };
 
     const pageSize = new LocalValue("pageSize", 20);
-    const result = new LocalValue(`res_${params.name}`, {} as SavedResult);
-    const pageCount = Math.ceil($result.results.length/$pageSize);
-    const baseUrl = `#/res/${$result.date}/`;
+    const { results, date } = get(new LocalValue(
+        params.name === "search" ? "search" : `res_${params.name}`, 
+        {} as SavedResult,
+    ));
+    const pageCount = Math.ceil(results?.length/$pageSize);
+    const baseUrl = `#/res/${date}/`;
     let posts: Result[];
     let currPage: number;
     $: {
         currPage = +params.page;
-        posts = $result.results.slice(currPage*$pageSize, (currPage+1)*$pageSize);
+        posts = results.slice(currPage*$pageSize, (currPage+1)*$pageSize);
     }
 
     let postSize = new LocalValue("postSize", "300");
@@ -50,10 +54,12 @@
 <svelte:window on:message={reply} />
 <a href="#/home">&lt; Go back</a>
 <br>
-<label>
-    <input type="checkbox" bind:checked={$showSource}>
-    show the source image,
-</label>
+{#if results[0]?.sim}
+    <label>
+        <input type="checkbox" bind:checked={$showSource}>
+        show the source image,
+    </label>
+{/if}
 post size: <select bind:value={$postSize}>
     <option label="small">150</option>
     <option label="medium">300</option>
@@ -61,7 +67,7 @@ post size: <select bind:value={$postSize}>
 </select>
 <div id="posts">
     <div class="header">
-        Search results: {$result.results.length} pictures
+        Search results: {results.length} pictures
     </div>
     <PageNavigator {baseUrl} {currPage} {pageCount} />
     <div style="--post-size: {$postSize}px">

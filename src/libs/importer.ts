@@ -24,7 +24,6 @@ type SavedResult = {
     query: string,
     results: Result[],
     date: number,
-    count: number,
 }
 export type { State, Result, SavedResult };
 
@@ -82,7 +81,6 @@ export default class Importer {
                     query: decodeURIComponent(this.query),
                     results: this.results,
                     date: Date.now(),
-                    count: this.results.length,
                 };
                 new LocalValue(`res_${res.date}`, {}).set(res);
                 this.stateObj.paused = true;

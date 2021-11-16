@@ -3,7 +3,7 @@
 	import TagImporter from "../libs/importer";
 	import { replace } from "svelte-spa-router";
 
-	export let params: { query:string }; 
+	export let params = { query: "" }; 
 
 	let importer = new TagImporter(params.query);
 	let state = importer.state;

@@ -60,7 +60,7 @@
             <a href="#/res/{search.date}/0">{search.query}</a>
             <span class="icon_delete" on:click={() => deleteResult(search)} />
             <br>
-            {search.count} found pictures {new Date(search.date).toLocaleString()},
+            {search.results.length} found pictures {new Date(search.date).toLocaleString()},
         </div>
     {:else}
         No saved imports!
