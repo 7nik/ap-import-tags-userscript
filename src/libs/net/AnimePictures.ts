@@ -247,6 +247,8 @@ const AnimePictures = {
             user: params.uploaderId,
             status: params.preStatus ? "pre" : null,
             stars_by: params.staredBy,
+            // @ts-ignore
+            lang: unsafeWindow.lang,
         };
         Reflect.ownKeys(queryParams).forEach((key) => {
             if (queryParams[key as string] == null) delete queryParams[key as string];
