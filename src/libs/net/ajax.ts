@@ -32,8 +32,8 @@ async function gmFetch (url: string, params: RequestInit = {}): Promise<Response
         return new Response(resp.response, {
             status: resp.status, statusText: resp.statusText
         });
-    } catch (resp) {
-        throw new Error(resp);
+    } catch (resp: any) {
+        throw new Error(resp?.toString());
     }
 }
 
@@ -54,6 +54,8 @@ async function query (fetch: FetchFunc, url: string, params: RequestInit = {}): 
                 console.warn(url, `\nServer responded with ${resp.status} code. ${nth} attempt`);
                 await sleep(5000);
                 continue;
+            } else {
+                return resp;
             }
         } catch (ex) {
             console.warn(ex, url, `\nFetch error. ${nth} attempt`);

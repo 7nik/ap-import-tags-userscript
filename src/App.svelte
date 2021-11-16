@@ -4,7 +4,7 @@
 	import ViewResultsPage from "./pages/ViewResultsPage.svelte";
 	import LocalValue from "./libs/localStorage";
 	import Router from "svelte-spa-router";
-import AnimePictures from "./libs/net/AnimePictures";
+	import AnimePictures from "./libs/net/AnimePictures";
 
 	const pageSize = new LocalValue("pageSize", 20);
 	AnimePictures.searchPosts(0, {}).then((res) => {
