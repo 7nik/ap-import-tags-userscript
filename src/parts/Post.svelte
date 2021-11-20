@@ -57,7 +57,7 @@
             {post.width}x{post.height}
         </a>
         <span title="Tags Num">({post.tags_count})</span>
-        <br hidden={!!status}>
+        <br hidden={!status}>
         {status}
     </div>
 </span>
