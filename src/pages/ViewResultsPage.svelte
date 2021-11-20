@@ -11,12 +11,12 @@
     export let params = { name: "", page: 0 };
 
     const pageSize = new LocalValue("pageSize", 20);
-    const { results, date } = get(new LocalValue(
+    const { results } = get(new LocalValue(
         params.name === "search" ? "search" : `res_${params.name}`, 
         {} as SavedResult,
     ));
     const pageCount = Math.ceil(results?.length/$pageSize);
-    const baseUrl = `#/res/${date}/`;
+    const baseUrl = `#/res/${params.name}/`;
     let posts: Result[];
     let currPage: number;
     $: {
