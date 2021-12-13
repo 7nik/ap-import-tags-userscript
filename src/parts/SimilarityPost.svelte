@@ -11,7 +11,11 @@
         : postSize === "300"
             ? post.medium_preview
             : post.big_preview;
-    $: dbImg = postSize === "150" ? post.dbPreview : post.dbLarge;
+    $: dbImg = postSize === "150" || post.dbPreview.endsWith("/download-preview.png")
+        ? post.dbPreview 
+        : postSize === "300"
+            ? post.dbPreview.replace("preview", "360x360")
+            : post.dbPreview.replace("preview", "720x720").slice(0, -3).concat("webp");
     // @ts-ignore
     const bgcolor = unsafeWindow.is_moderator
         ? ["none", "#F0F", "#F90", "#F00"][post.erotics]
