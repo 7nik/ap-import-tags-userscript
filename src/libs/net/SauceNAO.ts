@@ -428,12 +428,17 @@ async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Res
             await sleep(60000);
             continue;
         }
+        // if not authorized
+        if (res.header.status === -1) {
+            throw new Error(`SauceNAO: ${res.header.message}`);
+        }
 
         const { message, status, short_remaining = 0, long_remaining = 0 } = res.header;
         console.warn("Replanishing:", { message, status, short_remaining, long_remaining });
         await sleep(31000);
     }
-    throw new Error("Run out of search attempts");
+    // @ts-ignore
+    throw new Error((res as ErrorResult)?.header.message ?? "Run out of search attempts");
 }
 
 const SauceNAO = {
