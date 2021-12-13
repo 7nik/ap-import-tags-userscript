@@ -1,4 +1,4 @@
-import { readable, Readable } from 'svelte/store';
+import { writable, Readable } from 'svelte/store';
 import LocalValue from "./localStorage";
 import AP, { ShortPostInfo } from "./net/AnimePictures"; 
 import DB from "./net/Danbooru"; 
@@ -36,9 +36,7 @@ export default class Importer {
     private page = 0;
     private done = 0;
     private posts:PostInfo[] = [];
-    // @ts-ignore - readable's callback is called immediately
-    private saveState: Function;
-    private stateObj = {
+    private stateObj: State = {
         progress: 0,
         paused: true,
         finished: false,
@@ -52,7 +50,19 @@ export default class Importer {
 
     constructor (query: string) {
         this.query = query;
-        this.state = readable(this.stateObj, (set) => { this.saveState = () => set(this.stateObj); });
+
+        const stateStore = writable(this.stateObj);
+        this.stateObj = new Proxy(this.stateObj, {
+            set: (state: State, prop: keyof State, value) => {
+                // @ts-ignore
+                state[prop] = value;
+                stateStore.set(state);
+                return true;
+            }
+        })
+        this.state = {
+            subscribe: stateStore.subscribe,
+        };
     }
 
     /**
@@ -64,7 +74,6 @@ export default class Importer {
         if (this.doPause) {
             this.doPause = false;
             this.stateObj.paused = true;
-            this.saveState();
             return;
         }
         
@@ -85,7 +94,6 @@ export default class Importer {
                 new LocalValue(`res_${res.date}`, {}).set(res);
                 this.stateObj.paused = true;
                 this.stateObj.finished = true;
-                this.saveState();
                 return;
             }
         }
@@ -157,7 +165,6 @@ export default class Importer {
 
         this.done += 1;
         this.stateObj.progress = this.done / this.stateObj.requiredAttempts * 100;
-        this.saveState();
         this.iterate();
     }
 
@@ -182,7 +189,6 @@ export default class Importer {
                 this.stateObj.requiredAttempts = await DB.postCount(this.query);
             } catch (ex: any) {
                 this.stateObj.error = ex.message;
-                this.saveState();
                 throw ex;
             }
             if (this.stateObj.availableAttempts / (this.stateObj.requiredAttempts - this.done) < 0.99) {
@@ -198,7 +204,6 @@ export default class Importer {
             if (this.stateObj.paused) {
                 this.stateObj.paused = false;
                 this.stateObj.error = null;
-                this.saveState();
                 this.iterate();
             }
         }
