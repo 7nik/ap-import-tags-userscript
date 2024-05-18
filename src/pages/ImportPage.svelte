@@ -1,18 +1,22 @@
 <script lang="ts" module>
+	import { tweened } from "svelte/motion";
 	import Block from "../parts/Block.svelte";
 	import TagImporter from "../libs/importer";
 	import { replace } from "svelte-spa-router";
+	import dataProviders from "../libs/dataProviders";
 
-	export let params = { query: "" }; 
+	export let params = { query: "", provider: "Danbooru" };
 
-	let importer = new TagImporter(params.query);
+	let importer = new TagImporter(dataProviders[params.provider], params.query);
 	let state = importer.state;
-	$: { 
+	$: {
+		$progress = $state.progress;
 		if ($state.finished) {
-			replace("/home"); 
+			replace("/home");
 		}
 	}
 	let pending = true;
+	let progress = tweened(0);
 
 	toggle();
 
@@ -57,15 +61,15 @@
 		<br>
 	{/if}
 	<span>{$state.status}</span>
-    <progress max="100" value={$state.progress} />
+    <progress max="100" value={$progress} />
     <center>
-        <input 
-			type="button" 
-			value={$state.paused ? "resume" : "pause"} 
-			on:click={toggle} 
-			disabled={pending} 
+        <input
+			type="button"
+			value={$state.paused ? "resume" : "pause"}
+			on:click={toggle}
+			disabled={pending}
 		/>
-        {#if !$state.finished} 
+        {#if !$state.finished}
 			<input type="button" value="cancel" on:click={cancel} />
 		{/if}
     </center>

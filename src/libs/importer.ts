@@ -1,9 +1,12 @@
 import { writable, Readable } from 'svelte/store';
+import type { SimpleAPPost } from './providers/APDataProvider';
+import APPostProvider from './providers/APDataProvider';
 import LocalValue from "./localStorage";
-import AP, { ShortPostInfo } from "./net/AnimePictures"; 
-import DB from "./net/Danbooru"; 
-import SN from "./net/SauceNAO"; 
-import type { PostInfo } from "./net/Danbooru"; 
+import AP from "./net/AnimePictures";
+// import DB from "./net/Danbooru";
+import SN from "./net/SauceNAO";
+// import type { PostInfo } from "./net/Danbooru";
+import type { FoundPost, DataProvider, SimplePost } from './providers/DataProvider';
 
 type State = {
     progress: number,
@@ -13,29 +16,32 @@ type State = {
     availableAttempts: number,
     error: string | null;
     status: string;
+    eta: number; // timestamp
 };
-type Result = ShortPostInfo & {
-    dbLink: string,
-    dbLarge: string,
-    dbPreview: string,
+type Result = {
+    source: SimplePost|null,
+    result: SimpleAPPost,
     sim: number,
 };
 type SavedResult = {
+    providerName: string,
     query: string,
-    results: Result[],
     date: number,
+    results: Result[],
 }
 export type { State, Result, SavedResult };
 
 /**
  * Class to take pics on Danbooru and find the most similar on Anime-pictures user SauceNAO
  */
-export default class Importer {
+export default class Importer<Post extends {id?:any}, Provider extends DataProvider<Post, SimplePost>> {
+    private provider: Provider;
     private query: string;
+    private iterator: AsyncIterableIterator<FoundPost<Post>>;
     private doPause = false;
-    private page = 0;
-    private done = 0;
-    private posts:PostInfo[] = [];
+    private started = 0;
+    private paused = 0;
+    // private posts:PostInfo[] = [];
     private stateObj: State = {
         progress: 0,
         paused: true,
@@ -44,12 +50,15 @@ export default class Importer {
         status: "initialization",
         requiredAttempts: 0,
         availableAttempts: 0,
+        eta: 0,
     };
     readonly results: Result[] = [];
     readonly state: Readable<State>;
 
-    constructor (query: string) {
+    constructor (provider: Provider, query: string) {
+        this.provider = provider;
         this.query = query;
+        this.iterator = provider.findPosts(query);
 
         const stateStore = writable(this.stateObj);
         this.stateObj = new Proxy(this.stateObj, {
@@ -76,85 +85,42 @@ export default class Importer {
             this.stateObj.paused = true;
             return;
         }
-        
-        let post = this.posts.pop();
-        if (!post) {
-            // load posts from next page
-            this.page += 1;
-            this.posts = await DB.findPosts(this.query, this.page);
-            post = this.posts.pop();
-            if (!post) {
-                // it was the last page so save the results
-                this.results.sort((a, b) => +b.sim - +a.sim);
-                const res = {
-                    query: decodeURIComponent(this.query),
-                    results: this.results,
-                    date: Date.now(),
-                };
-                new LocalValue(`res_${res.date}`, {}).set(res);
-                this.stateObj.paused = true;
-                this.stateObj.finished = true;
-                return;
-            }
+
+        const res = await this.iterator.next();
+
+        if (res.done) { // it was the last page so save the results
+            this.results.sort((a, b) => +b.sim - +a.sim);
+            const res: SavedResult = {
+                query: decodeURIComponent(this.query),
+                providerName: this.provider.sourceName,
+                results: this.results,
+                date: Date.now(),
+            };
+            new LocalValue(`res_${res.date}`, {}).set(res);
+            this.stateObj.paused = true;
+            this.stateObj.finished = true;
+            return;
         }
 
+        let { post, progress } = res.value;
+        this.stateObj.progress = progress * 100;
+        this.stateObj.eta = (Date.now() - this.started) / progress + this.started;
+        this.stateObj.status = `${Math.round(progress*10_000)/100}%: post №${post.id}, ETA: ${new Date(this.stateObj.eta).toLocaleTimeString()}`;
         try {
-            this.stateObj.status = `${this.done}/${this.stateObj.requiredAttempts}: post №${post.id}`;
-            if (post.large_file_url) {
-                const simRes = await SN.searchOnAnimePictures(post.preview_file_url);
-                for (const res of simRes) {
-                    const apPost = await AP.getPostInfo(res.data['anime-pictures_id']);
-                    if (!this.results.find(({ id }) => id === apPost.id)) {
-                        this.results.push({
-                            dbLink:         `https://danbooru.donmai.us/posts/${post.id}`,
-                            dbLarge:        ["jpg", "jpeg", "png", "gif"].includes(post.file_ext)
-                                                ? post.large_file_url
-                                                : post.preview_file_url,
-                            dbPreview:      post.preview_file_url,
-                            sim:            +res.header.similarity,
-                            id:             apPost.id,
-                            md5:            apPost.md5,
-                            md5_pixels:     apPost.md5_pixels,
-                            width:          apPost.width,
-                            height:         apPost.height,
-                            small_preview:  apPost.small_preview,
-                            medium_preview: apPost.medium_preview,
-                            big_preview:    apPost.big_preview,
-                            pubtim:         apPost.pubtim,
-                            score:          apPost.score,
-                            score_number:   apPost.score_number,
-                            size:           apPost.size,
-                            download_count: apPost.download_count,
-                            erotics:        apPost.erotics,
-                            color:          apPost.color,
-                            ext:            apPost.ext,
-                            status:         apPost.status,
-                            spoiler:        apPost.spoiler,
-                            have_alpha:     apPost.have_alpha,
-                            tags_count:     apPost.tags_count,
-                        });
-                    }
-                } 
-            } else {
-                if (post.is_banned) {
-                    console.warn("\nBanned picture", {
-                        source: post.source,
-                        main_tags: [
-                            post.tag_string_copyright,
-                            post.tag_string_character,
-                            post.tag_string_artist,
-                        ].join(" "),
+            const source = this.provider.simplifyPost(post);
+            const simRes = await SN.searchOnAnimePictures(this.provider.getImage(source, "150"));
+            for (const res of simRes) {
+                const apPost = await AP.getPostInfo(res.data['anime-pictures_id']);
+                // drop tag list to decrease the size of the saved data
+                apPost.tags = [];
+                apPost.file_url = "";
+
+                if (!this.results.find(({ result }) => result.id === apPost.post.id)) {
+                    this.results.push({
+                        source,
+                        result: APPostProvider.simplifyPost(apPost.post),
+                        sim: +res.header.similarity,
                     });
-                } else if (!post.id) {
-                    console.warn("\nGold+ picture", {
-                        main_tags: [
-                            post.tag_string_copyright,
-                            post.tag_string_character,
-                            post.tag_string_artist,
-                        ].join(" "),
-                    });
-                } else {
-                    console.log("No preview", post);
                 }
             }
         } catch (ex: any) {
@@ -163,8 +129,8 @@ export default class Importer {
             this.stateObj.paused = true;
         }
 
-        this.done += 1;
-        this.stateObj.progress = this.done / this.stateObj.requiredAttempts * 100;
+        // this.done += 1;
+        // this.stateObj.progress = this.done / this.stateObj.requiredAttempts * 100;
         this.iterate();
     }
 
@@ -177,33 +143,41 @@ export default class Importer {
 
     /**
      * Continue the importer's work
-     * @param {boolean} [force=false] If true, continue work even if there are 
-     * no enough available search attempts 
+     * @param {boolean} [force=false] If true, continue work even if there are
+     * no enough available search attempts
      * @returns {Promise<boolean>} whether the work was resumed
      */
     async resume (force: boolean = false): Promise<boolean> {
+        if (this.stateObj.finished) return false;
+
         if (!force) {
             // check whether there are enough search attempts to find all the post
             try {
                 this.stateObj.availableAttempts = await SN.availableAttempts();
-                this.stateObj.requiredAttempts = await DB.postCount(this.query);
+                this.stateObj.requiredAttempts = await this.provider.postCount(this.query);
             } catch (ex: any) {
                 this.stateObj.error = ex.message;
                 throw ex;
             }
-            if (this.stateObj.availableAttempts / (this.stateObj.requiredAttempts - this.done) < 0.99) {
+            if (this.stateObj.availableAttempts / (this.stateObj.requiredAttempts - this.results.length) < 0.99) {
                 return false;
             }
         }
-        
+
         if (this.doPause) {
             // just was about to pause
             this.doPause = false;
+            this.paused = Date.now();
         } else {
             // was completely paused
             if (this.stateObj.paused) {
                 this.stateObj.paused = false;
                 this.stateObj.error = null;
+                if (this.started) {
+                    this.started = Date.now() - (this.paused - this.started);
+                } else {
+                    this.started = Date.now();
+                }
                 this.iterate();
             }
         }

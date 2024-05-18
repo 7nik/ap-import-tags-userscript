@@ -1,7 +1,7 @@
 import { get, sleep } from "./ajax";
 import LocalValue from "../localStorage";
-    
-type Params = Record<string, string|number>;
+
+type Params = Record<string, string|number|undefined>;
 type timestamp = string;
 
 type BadResponse = {
@@ -21,7 +21,7 @@ type BasePostInfo = {
     score: number,
     source: string|null,
     pixiv_id: number|null,
-    rating: "s"|"q"|"e"|null,
+    rating: "g"|"s"|"q"|"e"|null,
     image_width: number,
     image_height: number,
     fav_count: number,
@@ -59,7 +59,7 @@ type BasePostInfo = {
 // this info isn't provided if an anon or regular user attempts to get
 // a post which is banned or tagged as loli/shota
 type ExtraPostInfo =  {
-    id: number, 
+    id: number,
     md5: string,
     file_ext: string,
     file_url: string, // full link to original
@@ -67,9 +67,9 @@ type ExtraPostInfo =  {
     preview_file_url: string, // 150px of the biggest side
 }
 
-type OptinalPart<T> = T | Partial<Record<keyof T, undefined>>
+type OptionalPart<T> = T | Partial<Record<keyof T, undefined>>
 
-type PostInfo = BasePostInfo & OptinalPart<ExtraPostInfo>;
+type PostInfo = BasePostInfo & OptionalPart<ExtraPostInfo>;
 
 type PostCount = {
     counts: {
@@ -77,10 +77,31 @@ type PostCount = {
     }
 }
 
-type RespType<path> = 
-    path extends "/counts/posts.json" ? PostCount :
-    path extends "/posts.json" ? PostInfo[] :
-    never;
+export enum TagCategory {
+    general = 0,
+    artist = 1,
+    copyright = 3,
+    character = 4,
+    meta = 5,
+}
+
+type AutocompleteTag = {
+    type: "tag" | "tag-alias",
+    /**
+     * tag name with spaces
+     */
+    label: string,
+    /**
+     * tag name with underscores
+     */
+    value: string,
+    category: TagCategory,
+    post_count: number,
+    /**
+     * alias
+     */
+    antecedent?: string,
+}
 
 let dblogin: string, dbapikey: string;
 new LocalValue("dbkey", "").subscribe((key) => {
@@ -88,16 +109,16 @@ new LocalValue("dbkey", "").subscribe((key) => {
 });
 /**
  * Do a request to danbooru.donmai.us
- * @param {string} path - Relative link to request 
- * @param {Params} [params={}] - Request params 
+ * @param {string} path - Relative link to request
+ * @param {Params} [params={}] - Request params
  * @returns {Promise<object>} Parsed server response
  */
-async function danbooru<Path extends string> (path: Path, params: Params = {}): Promise<RespType<Path>> {
+async function danbooru<Result extends {}> (path: string, params: Params = {}): Promise<Result> {
     if (dblogin) {
         params.login = dblogin;
         params.api_key = dbapikey;
     }
-    let res: BadResponse | RespType<Path>;
+    let res: BadResponse | Result;
     for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
         res = await get(`https://danbooru.donmai.us${path}`, params);
 
@@ -113,21 +134,36 @@ async function danbooru<Path extends string> (path: Path, params: Params = {}): 
 
 const Danbooru = {
     /**
-     * Get number of posts for a given search query
-     * @param {string} query - Search query 
-     * @returns {Promise<number>} Number of posts
+     * Does autocomplete request
+     * @param tagName - the tag to complete
+     * @param type - type of completion, default `"tag_query"`
+     * @returns array of matched tags
      */
-    async postCount (tags: string): Promise<number> {
-        return (await danbooru("/counts/posts.json", { tags })).counts.posts;
+    autocompleteTag (tagName: string, type = "tag_query") {
+        return danbooru<AutocompleteTag[]>("/autocomplete.json", {
+            "search[query]": tagName,
+            "search[type]": type,
+            version: "1",
+            limit: "10",
+        });
+    },
+    /**
+     * Get number of posts for a given search query
+     * @param query - Search query
+     * @returns Number of posts
+     */
+    async postCount (tags: string) {
+        return (await danbooru<PostCount>("/counts/posts.json", { tags })).counts.posts;
     },
     /**
      * Get post infos
-     * @param {string} tags - Query to search the posts
-     * @param {number} page - Page number of results  
-     * @returns {Promise<PostInfo[]>} Array of post infos
+     * @param tags - Query to search the posts
+     * @param page - Page number of results
+     * @param limit - Max number of results per page
+     * @returns Array of post infos
      */
-    findPosts (tags: string, page: number = 1): Promise<PostInfo[]> {
-        return danbooru("/posts.json", { tags, page });
+    findPosts (tags: string, page: number = 1, limit?: number) {
+        return danbooru<PostInfo[]>("/posts.json", { tags, page, limit });
     },
 };
 

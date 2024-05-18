@@ -2,9 +2,9 @@
     import Block from "./Block.svelte";
     import AP from "../libs/net/AnimePictures";
     import LocalValue from "../libs/localStorage";
-    import { onMount } from "svelte";
+    // import { onMount } from "svelte";
     import type { FullTag } from "../libs/net/AnimePictures";
-import TagsField from "./TagsField.svelte";
+    import TagsField from "./TagsField.svelte";
 
     let cache: Record<string, FullTag> = {};
     let mode = "off";
@@ -27,9 +27,10 @@ import TagsField from "./TagsField.svelte";
                     tag = await AP.getTagByName(tagName);
                     cache[tagName] = tag;
                 }
-                if (tag) AP.removeTag(tag.id, postId);
+                if (tag) await AP.removeTag(tag.id, postId);
             }
         }
+
     };
 
     $: {
@@ -41,12 +42,12 @@ import TagsField from "./TagsField.svelte";
         }
     }
 
-    onMount(() => {
-        // @ts-ignore
-        new unsafeWindow.AnimePictures.AutoComplete("addInput", "/pictures/autocomplete_tag", true);
-        // @ts-ignore
-        new unsafeWindow.AnimePictures.AutoComplete("removeInput", "/pictures/autocomplete_tag", true);
-    });
+    // onMount(() => {
+    //     // @ts-ignore
+    //     new unsafeWindow.AnimePictures.AutoComplete("addInput", "/pictures/autocomplete_tag", true);
+    //     // @ts-ignore
+    //     new unsafeWindow.AnimePictures.AutoComplete("removeInput", "/pictures/autocomplete_tag", true);
+    // });
 
     function switchMode(ev: KeyboardEvent) {
         const focusElem = document.activeElement;
@@ -86,13 +87,13 @@ Use numerical and Esc keys to switch between actions.
         <option label="action 9">9</option>
     </select>
     <div class="break" />
-    <TagsField placeholder="tags to add" 
-    bind:value={$action.addTags} 
+    <TagsField placeholder="tags to add"
+    bind:value={$action.addTags}
     disabled={!enabled}
     />
     <div class="break" />
-    <TagsField placeholder="tags to remove" 
-        bind:value={$action.removeTags} 
+    <TagsField placeholder="tags to remove"
+        bind:value={$action.removeTags}
         disabled={!enabled}
     />
 </Block>

@@ -7,27 +7,38 @@
 	import AnimePictures from "./libs/net/AnimePictures";
 	import searcher from "./libs/searcher";
 	import Block from "./parts/Block.svelte";
-import { writable } from "svelte/store";
+	import { writable } from "svelte/store";
+    import { onDestroy } from "svelte";
 
 	const pageSize = new LocalValue("pageSize", 20);
-	AnimePictures.searchPosts(0, {}).then((res) => {
-		if ($pageSize !== res.posts.length) {
-			$pageSize = res.posts.length;
+	AnimePictures.userData().then((res) => {
+		if ($pageSize !== res.user.jvwall_ipp) {
+			$pageSize = res.user.jvwall_ipp;
 		}
 	});
 
 	let progress = writable(146);
 	const form = document.querySelector("#sidebar form");
-	const input = document.getElementById("side_search_tag") as HTMLInputElement
-	form?.addEventListener("submit", (ev) => {
+	const input = form?.querySelector("[type=search]") as HTMLInputElement
+	const button = form?.querySelector("[type=submit]") as HTMLInputElement
+	input?.addEventListener("keydown", doSearch, true);
+	button?.addEventListener("click", doSearch, true);
+	function doSearch (ev: Event) {
+		if (ev instanceof KeyboardEvent && ev.key !== "Enter") return;
 		ev.preventDefault();
+		ev.stopPropagation();
 		progress = searcher(input.value);
-	});
+	};
 	$: if ($progress === 100) { push("/res/search/0"); }
+
+	onDestroy(() => {
+		input?.removeEventListener("keydown", doSearch);
+		button?.removeEventListener("click", doSearch);
+	})
 
 	const routes = {
 		"/home": HomePage,
-		"/import/:query": ImportPage,
+		"/import/:provider/:query": ImportPage,
 		"/res/:name/:page": ViewResultsPage,
 		"*": HomePage,
 	};
@@ -38,7 +49,7 @@ import { writable } from "svelte/store";
 {#if $progress < 100 }
 	<div>
 		<Block title="Searching">
-			Geathering the pictures of {input.value}
+			Gathering the pictures of {input.value}
 			<br>
 			<progress max="100" value={$progress} />
 		</Block>

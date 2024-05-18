@@ -1,20 +1,15 @@
-<script lant="ts">
-import { onMount } from "svelte";
-
-
+<script lang="ts">
 	export let title = "";
 	export let hint = "";
 
-	let elem;
-	let className = "";
-	onMount(() => {
-		className = elem.closest("#sidebar")
+	function addClass (elem: HTMLElement) {
+		elem.classList.add(elem.closest("#sidebar")
 			? "sidebar_block"
-			: "post_content";
-	});
+			: "post_content");
+	}
 </script>
 
-<div bind:this={elem} class={className}>
+<div use:addClass>
 	<div class="title">
 		{title}
 		{#if hint}

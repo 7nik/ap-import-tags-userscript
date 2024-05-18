@@ -1,27 +1,24 @@
 <script lang="ts">
     import type Multiaction from "./Multiaction.svelte";
     import type { Result } from "../libs/importer";
-    
+    import type { DataProvider } from "../libs/providers";
+    import APPostProvider from "../libs/providers/APDataProvider";
+
     export let post: Result;
     export let postSize: "150"|"300"|"500" = "300";
     export let multiaction: Multiaction;
+    export let dataProvider: DataProvider<any, any>;
 
-    $: apImg = postSize === "150"
-        ? post.small_preview
-        : postSize === "300"
-            ? post.medium_preview
-            : post.big_preview;
-    $: dbImg = postSize === "150" || post.dbPreview.endsWith("/download-preview.png")
-        ? post.dbPreview 
-        : postSize === "300"
-            ? post.dbPreview.replace("preview", "360x360")
-            : post.dbPreview.replace("preview", "720x720").slice(0, -3).concat("webp");
+    $: apImg = APPostProvider.getImage(post.result, postSize);
+    $: dbImg = post.source ? dataProvider.getImage(post.source, postSize) : "";
+    // TODO fixme
     // @ts-ignore
     const bgcolor = unsafeWindow.is_moderator
-        ? ["none", "#F0F", "#F90", "#F00"][post.erotics]
+        ? ["none", "#F0F", "#F90", "#F00"][post.result.erotics]
         : "none";
-    const textColor = post.color.reduce((s,a)=>s+a) > 128*3 ? "black" : "white";
-    const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.status];
+    const textColor = post.result.color.reduce((s,a)=>s+a) > 128*3 ? "black" : "white";
+    const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.result.status];
+    // TODO fixme
     // @ts-ignore
     const lang = unsafeWindow.lang || "en";
 
@@ -34,7 +31,7 @@
         if (multiaction?.enabled) {
             ev.preventDefault();
             pending = true;
-            multiaction.apply(post.id).finally(() => pending = false);
+            multiaction.apply(post.result.id).finally(() => pending = false);
         }
     }
 </script>
@@ -42,30 +39,30 @@
 <span class="post" class:pending>
     <div class="img_block_text" style="
         opacity: 1;
-        background-image: linear-gradient(to right, transparent, rgb({post.color}), transparent);
+        background-image: linear-gradient(to right, transparent, rgb({post.result.color}), transparent);
         color: {textColor};"
-    > 
-        <a href="/pictures/view_posts/0?res_x={post.width}&amp;res_y={post.height}&amp;lang=en" 
-            title="Anime pictures {post.width}x{post.height}"
+    >
+        <a href="/pictures/view_posts/0?res_x={post.result.width}&amp;res_y={post.result.height}&amp;lang=en"
+            title="Anime pictures {post.result.width}x{post.result.height}"
             target="_blank"
             style="background-color: {bgcolor};"
         >
-            {post.width}x{post.height}
+            {post.result.width}x{post.result.height}
         </a>
-        <span title="Tags Num">({post.tags_count})</span>
+        <span title="Tags Num">({post.result.tags_count})</span>
         <span title="Similarity">{Math.round(+post.sim)}%</span>
         <br hidden={!!status}>
         {status}
     </div>
-    <a class="db_link" 
-        href={post.dbLink} 
-        title="Danbooru post" 
+    <a class="db_link"
+        href={post.source ? dataProvider.getLink(post.source) : ""}
+        title="{dataProvider.sourceName} post"
         target="_blank"
         on:click={handleClick}
     > </a>
-    <a class="ap_link" 
-        href="/pictures/view_post/{post.id}?lang={lang || "en"}" 
-        title="Anime pictures post" 
+    <a class="ap_link"
+        href="/pictures/view_post/{post.result.id}?lang={lang || "en"}"
+        title="Anime pictures post"
         target="_blank"
         rel="opener"
         on:click={handleClick}
@@ -92,12 +89,14 @@
         margin: 3px;
         width: var(--post-size);
         height: var(--post-size);
+        transition: opacity 0.2s 0.2s;
     }
     img {
         max-width: var(--post-size);
         max-height: var(--post-size);
     }
     .post.pending {
+        transition: none;
         opacity: 0.5;
     }
     .db_link, .ap_link {

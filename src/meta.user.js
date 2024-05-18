@@ -8,4 +8,5 @@
 // @grant        GM.xmlHttpRequest
 // @grant        GM.addStyle
 // @connect      saucenao.com
+// @connect      minitokyo.net
 // ==/UserScript==
