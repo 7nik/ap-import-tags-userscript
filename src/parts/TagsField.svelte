@@ -2,37 +2,45 @@
     import type { DataProvider, MatchedTag } from "../libs/providers";
     import APDataProvider from "../libs/providers/APDataProvider";
 
-    /**
-     * The placeholder to display in the input field
-     */
-    export let placeholder = "";
-    /**
-     * The tag delimiters, default - `"||"`, `"&&"`
-     */
-    // let delimiters = [",", ";"];
-    /**
-     * Append the first delimiter at tag completion, default - no
-     */
-    export let autoAppend = false;
-    /**
-     * The field value
-     */
-    export let value = "";
-    /**
-     * Whether to disable the field
-     */
-    export let disabled = false;
-    /**
-     * The methods for tag autocompletion
-     */
-    export let dataProvider: DataProvider<any, any> = APDataProvider;
+    type Props = {
+        /**
+         * The placeholder to display in the input field
+         */
+        placeholder?: string;
+        /**
+         * Append the first delimiter at tag completion, default - no
+         */
+        autoAppend?: boolean;
+        /**
+         * The field value
+         */
+        value: string;
+        /**
+         * Whether to disable the field
+         */
+        disabled?: boolean;
+        /**
+         * The methods for tag autocompletion
+         */
+        dataProvider?: DataProvider<any, any>;
+    }
+
+    /* eslint-disable prefer-const */
+    let {
+        placeholder = "",
+        autoAppend = false,
+        value = $bindable(),
+        disabled = false,
+        dataProvider = APDataProvider,
+    }: Props = $props();
+    /* eslint-enable prefer-const */
 
     let inputElem: HTMLInputElement;
-    let tags: MatchedTag[] = [];
-    let selTag: MatchedTag|null = null;
-    let focused = false;
-    let query = "";
-    $: show = focused && tags.length > 0;
+    let tags: MatchedTag[] = $state([]);
+    let selTag: MatchedTag|null = $state(null);
+    let focused = $state(false);
+    let query = $state("");
+    const show = $derived(focused && tags.length > 0);
 
     function getCurrentTag () {
         const str = value.slice(0, inputElem.selectionStart!);
@@ -41,10 +49,10 @@
         if (delim) {
             pos = str.lastIndexOf(delim.at(-1)!) + delim.at(-1)!.length;
         }
-        return (!pos ? str : str.slice(pos)).trim();
+        return (pos ? str.slice(pos) : str).trim();
     }
 
-    let timer: NodeJS.Timeout;
+    let timer: number;
     function autocomplete () {
         let tagName = getCurrentTag();
         for (const prefix of dataProvider.tagPrefixes) {
@@ -69,31 +77,38 @@
             const list = elem?.parentNode?.children;
             if (!elem || !list) return;
             selTag = tags[[...list].indexOf(elem)];
-        // choose the selected tag
-        } else if (ev.key === "ArrowRight" || ev.key === "Tab") {
-            if (selTag) {
-                // if (autoAppend) value += delimiters[0];
-                insertTag(selTag.mainName, true);
-                tags = [];
-                selTag = null;
-                // (ev.target as HTMLInputElement).selectionStart =
-                //     (ev.target as HTMLInputElement).selectionEnd = value.length;
-                ev.preventDefault();
-            }
-            return;
-            // select another tag
-        } else if (ev.key === "ArrowDown") {
-            selTag = selTag
-                ? tags[Math.min(tags.indexOf(selTag)+1, tags.length-1)]
-                : tags[0];
-            ev.preventDefault();
-        } else if (ev.key === "ArrowUp") {
-            selTag = selTag
-                ? tags[Math.max(tags.indexOf(selTag)-1, 0)]
-                : tags[tags.length-1];
-            ev.preventDefault();
         } else {
-            return;
+            switch (ev.key) {
+                // choose the selected tag
+                case "Tab":
+                case "ArrowRight":
+                    if (selTag) {
+                        // if (autoAppend) value += delimiters[0];
+                        insertTag(selTag.mainName, true);
+                        tags = [];
+                        selTag = null;
+                        // (ev.target as HTMLInputElement).selectionStart =
+                        //     (ev.target as HTMLInputElement).selectionEnd = value.length;
+                        ev.preventDefault();
+                    }
+                    return;
+                // select tag below
+                case "ArrowDown":
+                    selTag = selTag
+                        ? tags[Math.min(tags.indexOf(selTag) + 1, tags.length - 1)]
+                        : tags[0] ?? null;
+                    ev.preventDefault();
+                    break;
+                // select tag above
+                case "ArrowUp":
+                    selTag = selTag
+                        ? tags[Math.max(tags.indexOf(selTag) - 1, 0)]
+                        : tags.at(-1) ?? null;
+                    ev.preventDefault();
+                    break;
+                default:
+                    return;
+            }
         }
         // display the selected tag in the field
         // const pos = getLastDelimPos();
@@ -121,31 +136,32 @@
         const afterCaret = value.slice(inputElem.selectionStart!).trim();
         value = beforeCaret + afterCaret;
         if (canAppend && autoAppend) value += ", ";
-        inputElem.selectionStart = inputElem.selectionEnd = beforeCaret.length;
+        inputElem.selectionStart = beforeCaret.length;
+        inputElem.selectionEnd = beforeCaret.length;
     }
 </script>
 
-<svelte:options accessors={true} />
 <div>
     <input {placeholder}
         type="search"
         autocomplete="off"
         bind:value
         bind:this={inputElem}
-        on:keydown={selectTag}
-        on:input={autocomplete}
-        on:focus={() => focused = true}
-        on:blur={() => focused = false}
+        onkeydown={selectTag}
+        oninput={autocomplete}
+        onfocus={() => { focused = true; }}
+        onblur={() => { focused = false; }}
         {disabled}
     />
     <ul class:show>
         {#each tags as tag }
-            <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <li
                 class="cat-{tag.category}"
                 class:active="{tag === selTag}"
-                on:mousedown={selectTag}
+                onmousedown={selectTag}
             >
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                 {@html tag.matchedName.replace(query, `<b>${query}</b>`)}
                 {#if tag.matchedName !== tag.mainName} → {tag.mainName}{/if}
             </li>

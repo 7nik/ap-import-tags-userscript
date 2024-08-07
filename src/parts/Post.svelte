@@ -1,32 +1,31 @@
 <script lang="ts">
-    import type Multiaction from "./Multiaction.svelte";
+    import type MultiAction from "./MultiAction.svelte";
     import type { SimpleAPPost } from "../libs/providers/APDataProvider";
+    import { POST_STATUS_TEXT } from "../libs/constant";
     import APPostProvider from "../libs/providers/APDataProvider";
+    import storage from "../libs/storage.svelte";
+    import {
+        contrastColor, eroticColor, isPostPublished, siteLang,
+    } from "../libs/utils.svelte";
 
-    export let post: SimpleAPPost;
-    export let postSize: "150"|"300"|"500" = "300";
-    export let multiaction: Multiaction;
+    const { post, multiAction }: {
+        post: SimpleAPPost,
+        multiAction: Pick<MultiAction, "isEnabled"|"applyTo">,
+    } = $props();
 
-    $: imgSrc = APPostProvider.getImage(post, postSize);
-    // @ts-ignore
-    const bgcolor = unsafeWindow.is_moderator
-        ? ["none", "#F0F", "#F90", "#F00"][post.erotics]
-        : "none";
-    const textColor = post.color.reduce((s,a)=>s+a) > 128*3 ? "black" : "white";
-    const status = { "-2": "PRE", 0: "NEW", 1: "", 2: "BAN" }[post.status];
-    // @ts-ignore
-    const lang = unsafeWindow.lang || "en";
+    const imgSrc = $derived(APPostProvider.getImage(post, storage.postSize ?? "300"));
+    const lang = siteLang();
 
-    let pending = false;
+    let pending = $state(false);
     function handleClick (ev: MouseEvent) {
         if (pending) {
             ev.preventDefault();
             return;
         }
-        if (multiaction?.enabled) {
+        if (multiAction.isEnabled()) {
             ev.preventDefault();
             pending = true;
-            multiaction.apply(post.id).finally(() => pending = false);
+            multiAction.applyTo(post.id).finally(() => { pending = false; });
         }
     }
 </script>
@@ -36,30 +35,30 @@
         title="Anime pictures {post.width}x{post.height}"
         target="_blank"
         rel="opener"
-        on:click={handleClick}
+        onclick={handleClick}
     >
         {#if imgSrc.endsWith(".mp4")}
             <video src={imgSrc} muted></video>
         {:else}
-            <!-- svelte-ignore a11y-missing-attribute -->
+            <!-- svelte-ignore a11y_missing_attribute -->
             <img src="{imgSrc}">
         {/if}
     </a>
     <div class="img_block_text" style="
         opacity: 1;
         background-image: linear-gradient(to right, transparent, rgb({post.color}), transparent);
-        color: {textColor};"
+        color: {contrastColor(post)};"
     >
-        <a href="/pictures/view_posts/0?res_x={post.width}&amp;res_y={post.height}&amp;{lang}"
+        <a href="/pictures/view_posts/0?res_x={post.width}&res_y={post.height}&lang={lang}"
             title="Anime pictures {post.width}x{post.height}"
             target="_blank"
-            style="background-color: {bgcolor};"
+            style="background-color: {eroticColor(post)};"
         >
             {post.width}x{post.height}
         </a>
         <span title="Tags Num">({post.tags_count})</span>
-        <br hidden={!status}>
-        {status}
+        <br hidden={isPostPublished(post)}>
+        {POST_STATUS_TEXT[post.status]}
     </div>
 </span>
 

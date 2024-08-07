@@ -1,32 +1,29 @@
 <script lang="ts">
-    import type { SavedResult } from "../libs/importer";
-	import Block from "../parts/Block.svelte";
-	import LocalValue from "../libs/localStorage";
-    import { replace } from "svelte-spa-router";
-    import { get } from 'svelte/store';
-    import TagsField from "../parts/TagsField.svelte";
+    import type { SavedResult } from "../libs/importer.svelte";
+    import { push } from "svelte-spa-router";
     import dataProviders from "../libs/providers";
+    import localStorage from "../libs/storage.svelte";
+    import Block from "../parts/Block.svelte";
+    import TagsField from "../parts/TagsField.svelte";
 
     let dataProvider = dataProviders.Danbooru;
 
-	const dbkey = new LocalValue("dbkey", "");
-	const snkey = new LocalValue("snkey", "");
-    let searches = LocalValue.listValues()
+    let searches = localStorage.keys()
         .sort().reverse()
         .filter((name) => name.startsWith("res_"))
-        .map((name) => get(new LocalValue(name, {} as SavedResult)));
-	let form: HTMLFormElement;
-	let query = "";
+        .map((name) => localStorage.get(name as any) as SavedResult);
+    let form: HTMLFormElement;
+    let query = "";
 
     function startImport (ev: Event) {
-		if (!form.checkValidity()) return;
+        if (!form.checkValidity()) return;
         ev.preventDefault();
-        replace(`/import/${dataProvider.sourceName}/${encodeURIComponent(query)}`);
+        push(`/import/${dataProvider.sourceName}/${encodeURIComponent(query)}`);
     }
 
     function deleteResult (search: SavedResult) {
         searches = searches.filter((s) => s !== search);
-        new LocalValue(`res_${search.date}`, {}).delete();
+        localStorage.delete(`res_${search.date}`);
     }
 </script>
 
@@ -46,25 +43,25 @@
                 {dataProvider}
                 bind:value={query}
             />
-            <span title={dataProvider.helpInfo} class="question_icon" />
+            <span title={dataProvider.helpInfo} class="question_icon"></span>
         </span>
         <span>Danbooru key:</span>
         <input
             type="text"
             placeholder="Danbooru login, space, API key (desired)"
-            bind:value={$dbkey}
+            bind:value={localStorage.dbkey}
             pattern=".+ \w{"{24}"}"
         />
         <span>SauceNAO key:</span>
         <input
             type="text"
             placeholder="SauceNAO API key (optional)"
-            bind:value={$snkey}
+            bind:value={localStorage.snapikey}
             pattern="[0-9a-f]{"{40}"}"
         />
         <input type="submit" value="Start importing"
-            on:click={startImport}
-            on:submit={startImport}
+            onclick={startImport}
+            onsubmit={startImport}
         />
     </form>
 </Block>
@@ -73,8 +70,9 @@
     {#each searches as search}
         <div>
             <a href="#/res/{search.date}/0">{search.providerName}: {search.query}</a>
-            <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-            <span class="icon_delete" on:click={() => deleteResult(search)} />
+            <!-- eslint-disable-next-line max-len -->
+            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+            <span class="icon_delete" onclick={() => deleteResult(search)}></span>
             <br>
             {search.results.length} found pictures {new Date(search.date).toLocaleString()},
         </div>
@@ -84,21 +82,22 @@
 </Block>
 
 <style>
-	form {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 5px;
-	}
-	input[type="submit"] {
-		grid-column: 1/3;
-    	margin: 10px auto;
-	}
+    form {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 5px;
+    }
+    input[type="submit"] {
+        grid-column: 1/3;
+        margin: 10px auto;
+    }
     .field {
         display: grid;
         grid-template-columns: auto min-content;
     }
     .question_icon {
         background-image: url(/assets/styles/icons/help.svg);
+        background-size: contain;
         width: 16px;
         height: 16px;
         float: right;

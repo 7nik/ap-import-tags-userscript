@@ -1,38 +1,32 @@
 <script lang="ts">
-    export let pageCount: number;
-    export let currPage: number;
-    export let baseUrl = "";
-    let pages: (number|null)[];
-    $: {
-        pages = [];
-        if (currPage <= 6) {
-            pages.push(...Array(currPage+1).fill(1).map((_, i) => i));
-        } else {
-            pages.push(0, 1, 2, null, currPage-2, currPage-1, currPage);
+    const { pageCount, currPage, baseUrl = "" }: {
+        pageCount:number, currPage:number, baseUrl?:string,
+    } = $props();
+
+    const pages = $derived.by(() => {
+        // eslint-disable-next-line no-shadow
+        const pages = [];
+        for (let i = 0; i <= 2 && i < pageCount; i++) {
+            pages.push(i);
         }
-        if (currPage < pageCount-1) {
-            if (pageCount - currPage > 7) {
-                pages.push(
-                    currPage+1, currPage+2,
-                    null,
-                    pageCount-3, pageCount-2, pageCount-1,
-                );
-            } else {
-                pages.push(
-                    ...Array(pageCount-currPage-1).fill(1)
-                        .map((_,i) => currPage+i+1)
-                );
-            }
+        if (currPage >= 6) pages.push(null); // "..." text
+        for (let i = Math.max(3, currPage - 2); i <= currPage + 2 && i < pageCount; i++) {
+            pages.push(i);
         }
-    }
+        if (pageCount - currPage > 6) pages.push(null); // "..." text
+        for (let i = Math.max(currPage + 3, pageCount - 3); i < pageCount; i++) {
+            pages.push(i);
+        }
+        return pages;
+    });
 </script>
 
 <p class="numeric_pages">
-    {#if currPage != 0}
-        <a href="{baseUrl}{currPage-1}">&lt;</a>
+    {#if currPage !== 0}
+        <a href="{baseUrl}{currPage - 1}">&lt;</a>
     {/if}
     {#each pages as page}
-        {#if page == currPage}
+        {#if page === currPage}
             <span class="active">{page}</span>
         {:else if page !== null}
             <a href="{baseUrl}{page}">{page}</a>
@@ -40,8 +34,8 @@
             <span>...</span>
         {/if}
     {/each}
-    {#if currPage != pageCount-1}
-        <a href="{baseUrl}{currPage+1}">&gt;</a>
+    {#if currPage !== pageCount - 1}
+        <a href="{baseUrl}{currPage + 1}">&gt;</a>
     {/if}
 </p>
 

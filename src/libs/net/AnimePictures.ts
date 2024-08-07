@@ -33,7 +33,7 @@ type ShortPostInfo = {
     download_count: number,
     erotics: 0|1|2|3, // no erotic, light erotic, [medium] erotic, hard erotic
     color: [number, number, number], // average color, RGB format
-    ext: ".jpg"|".jpeg"|".png"|".gif",
+    ext: "jpg"|"jpeg"|"png"|"gif",
     status: 0|-2|1|2, // new|pre|published|banned
     status_type: number,
     redirect_id: number|null,
@@ -282,7 +282,7 @@ const AnimePictures = {
         if (!res.tags[0]) return res.tags[0];
         // if it's an alias, return the main tag
         if (res.tags[0].alias) {
-            return await this.getTagById(res.tags[0].alias);
+            return this.getTagById(res.tags[0].alias);
         }
         return res.tags[0];
     },
@@ -327,8 +327,8 @@ const AnimePictures = {
             favorite_folder: params.favoriteFolder,
             res_x: params.width,
             res_y: params.height,
-            res_x_n: params.wider ? 1 : params.wider === false ? 0 : null,
-            res_y_n: params.taller ? 1 : params.taller === false ? 0 : null,
+            res_x_n: params.wider ? 1 : (params.wider === false ? 0 : null),
+            res_y_n: params.taller ? 1 : (params.taller === false ? 0 : null),
             aspect: params.aspectRatio,
             order_by: {
                 date: "date",
@@ -362,13 +362,15 @@ const AnimePictures = {
             user: params.uploaderId,
             status: params.preStatus ? "pre" : null,
             stars_by: params.staredBy,
-            // @ts-ignore
             lang: "",
         };
-        Reflect.ownKeys(queryParams).forEach((key) => {
+        for (const key of Reflect.ownKeys(queryParams)) {
             if (queryParams[key as string] == null) delete queryParams[key as string];
-        })
-        const res: SearchPostsResultRaw = await get(`${HOST}/api/v3/posts`, queryParams as Record<string, string>);
+        }
+        const res: SearchPostsResultRaw = await get(
+            `${HOST}/api/v3/posts`,
+            queryParams as Record<string, string>,
+        );
         return {
             searchedTag: res.exclusive_tag,
             currentPage: res.page_number,
@@ -388,7 +390,7 @@ const AnimePictures = {
      */
     async removeTag (tagId: number, postId: number): Promise<string> {
         const res: PostHtmlTags = await del(
-            `${HOST}/api/v3/posts/${postId}/tags/${tagId}`
+            `${HOST}/api/v3/posts/${postId}/tags/${tagId}`,
         );
         return res.post_tags;
     },
@@ -396,10 +398,15 @@ const AnimePictures = {
      * Retrieves various user's data and settings
      * @returns JSON response
      */
-    async userData (): Promise<ProfileResult> {
-        return await get(`${HOST}/api/v3/profile`);
-    }
+    userData (): Promise<ProfileResult> {
+        return get(`${HOST}/api/v3/profile`);
+    },
 };
 
 export default AnimePictures;
-export type { PostInfo, ShortPostInfo, FullTag, AutocompleteTag };
+export type {
+    PostInfo,
+    ShortPostInfo,
+    FullTag,
+    AutocompleteTag,
+};

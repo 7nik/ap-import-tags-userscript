@@ -1,5 +1,6 @@
+/* eslint-disable no-await-in-loop */
+import storage from "../storage.svelte";
 import { get, sleep } from "./ajax";
-import LocalValue from "../localStorage";
 
 type Params = Record<string, string|number|undefined>;
 type timestamp = string;
@@ -103,17 +104,17 @@ type AutocompleteTag = {
     antecedent?: string,
 }
 
-let dblogin: string, dbapikey: string;
-new LocalValue("dbkey", "").subscribe((key) => {
-    [dblogin, dbapikey] = key.split(" ");
-});
 /**
  * Do a request to danbooru.donmai.us
  * @param {string} path - Relative link to request
  * @param {Params} [params={}] - Request params
  * @returns {Promise<object>} Parsed server response
  */
-async function danbooru<Result extends {}> (path: string, params: Params = {}): Promise<Result> {
+async function danbooru<Result extends object> (
+    path: string,
+    params: Params = {},
+): Promise<Result> {
+    const [dblogin, dbapikey] = storage.dbkey?.split(" ") ?? [];
     if (dblogin) {
         params.login = dblogin;
         params.api_key = dbapikey;
@@ -153,7 +154,8 @@ const Danbooru = {
      * @returns Number of posts
      */
     async postCount (tags: string) {
-        return (await danbooru<PostCount>("/counts/posts.json", { tags })).counts.posts;
+        const res = await danbooru<PostCount>("/counts/posts.json", { tags });
+        return res.counts.posts;
     },
     /**
      * Get post infos

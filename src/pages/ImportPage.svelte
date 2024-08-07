@@ -1,85 +1,81 @@
-<script lang="ts" module>
-	import { tweened } from "svelte/motion";
-	import Block from "../parts/Block.svelte";
-	import TagImporter from "../libs/importer";
-	import { replace } from "svelte-spa-router";
-	import dataProviders from "../libs/dataProviders";
+<script lang="ts">
+    import { replace } from "svelte-spa-router";
+    import TagImporter from "../libs/importer.svelte";
+    import dataProviders from "../libs/providers";
+    import Block from "../parts/Block.svelte";
 
-	export let params = { query: "", provider: "Danbooru" };
+    const { params }: { params: { query:string, provider:string }} = $props();
 
-	let importer = new TagImporter(dataProviders[params.provider], params.query);
-	let state = importer.state;
-	$: {
-		$progress = $state.progress;
-		if ($state.finished) {
-			replace("/home");
-		}
-	}
-	let pending = true;
-	let progress = tweened(0);
+    const importer = new TagImporter(dataProviders[params.provider], params.query);
+    $effect(() => {
+        if (importer.state.finished) replace("/home");
+    });
+    let pending = $state(true);
 
-	toggle();
+    toggle();
 
-	async function toggle () {
-		if ($state.paused) {
-			// if couldn't resume due to low number of available attempts
-			try {
-				if (!await importer.resume()) {
-					const { availableAttempts: av, requiredAttempts: req } = $state;
-					if (confirm(`There are no enough available search attempts on SauceNAO: only ${av} of ${req}, continue?`)) {
-						importer.resume(true);
-					}
-				}
-			} catch (ex) {
-				console.error(ex);
-			}
-		} else {
-			importer.pause();
-		}
-		pending = false;
-	}
+    async function toggle () {
+        if (importer.state.paused) {
+            // if couldn't resume due to low number of available attempts
+            try {
+                if (!await importer.resume()) {
+                    const { availableAttempts: av, requiredAttempts: req } = importer.state;
+                    // eslint-disable-next-line no-restricted-globals
+                    if (confirm(`There are no enough available search attempts on SauceNAO: only ${av} of ${req}, continue?`)) {
+                        importer.resume(true);
+                    }
+                }
+            } catch (ex) {
+                console.error(ex);
+            }
+        } else {
+            importer.pause();
+        }
+        pending = false;
+    }
 
-	function cancel() {
-		if (confirm("Are you sure that you want cancel importing? All progress will be lost!")) {
-			importer.pause();
-			replace("/home");
-		}
-	}
+    function cancel () {
+        // eslint-disable-next-line no-restricted-globals
+        if (confirm("Are you sure that you want cancel importing? All progress will be lost!")) {
+            importer.pause();
+            replace("/home");
+        }
+    }
 
-	function onleave(ev: BeforeUnloadEvent) {
-		if ($state.finished) return;
-		ev.preventDefault();
-		return (ev.returnValue = "If you leave the page you'll lost all the progress! Leave the page?");
-	}
+    function onbeforeunload (ev: BeforeUnloadEvent) {
+        if (!importer.state.finished) {
+            ev.preventDefault();
+        }
+    }
 
 </script>
 
-<svelte:window on:beforeunload={onleave} />
+<svelte:window {onbeforeunload} />
 <Block title="Importing tags">
-	{#if $state.error !== null}
-		<span class="red">Error: {$state.error}</span>
-		<br>
-	{/if}
-	<span>{$state.status}</span>
-    <progress max="100" value={$progress} />
+    {#if importer.state.error !== null}
+        <span class="red">Error: {importer.state.error}</span>
+        <br>
+    {/if}
+    <span>{importer.state.status}</span>
+    <progress max="100" value={importer.state.progress}></progress>
     <center>
         <input
-			type="button"
-			value={$state.paused ? "resume" : "pause"}
-			on:click={toggle}
-			disabled={pending}
-		/>
-        {#if !$state.finished}
-			<input type="button" value="cancel" on:click={cancel} />
-		{/if}
+            type="button"
+            value={importer.state.paused ? "resume" : "pause"}
+            onclick={toggle}
+            disabled={pending}
+        />
+        {#if !importer.state.finished}
+            <input type="button" value="cancel" onclick={cancel} />
+        {/if}
     </center>
 </Block>
 
 <style>
-	progress {
-		width: 100%;
-	}
-	.red {
-		color: red;
-	}
+    progress {
+        width: 100%;
+    }
+    .red {
+        color: red;
+    }
 </style>

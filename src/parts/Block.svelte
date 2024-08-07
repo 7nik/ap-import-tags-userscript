@@ -1,22 +1,21 @@
 <script lang="ts">
-	export let title = "";
-	export let hint = "";
+    import type { Snippet } from "svelte";
 
-	function addClass (elem: HTMLElement) {
-		elem.classList.add(elem.closest("#sidebar")
-			? "sidebar_block"
-			: "post_content");
-	}
+    const { title, hint, children }: { title:string, hint?:string, children:Snippet } = $props();
+
+    function addClass (elem: HTMLElement) {
+        elem.classList.add(elem.closest("#sidebar") ? "sidebar_block" : "post_content");
+    }
 </script>
 
 <div use:addClass>
-	<div class="title">
-		{title}
-		{#if hint}
-			<span title={hint} class="question_icon" />
-		{/if}
-	</div>
-	<div class="body">
-		<slot></slot>
-	</div>
+    <div class="title">
+        {title}
+        {#if hint}
+            <span title={hint} class="question_icon"></span>
+        {/if}
+    </div>
+    <div class="body">
+        {@render children()}
+    </div>
 </div>

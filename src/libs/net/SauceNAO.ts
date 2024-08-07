@@ -1,6 +1,7 @@
+/* eslint-disable no-await-in-loop */
+import storage from "../storage.svelte";
 import { get, sleep } from "./ajax";
-import LocalValue from "../localStorage";
-    
+
 type Params<ID> = Record<string, string|number> & { db: ID };
 type textNumber = string; // number presented as string
 type timestamp = string;
@@ -313,14 +314,14 @@ AnimePicturesResult|E621Result|SankakuIdolResult|BcyResult|PortalGraphicsResult|
 DeviantArtResult|PawooResult|MangaUpdatesResult|MangaDexResult|EHentaiResult|ArtStationResult|
 FurAffinityResult|TwitterResult|FurryNetworkResult;
 
-type AutoResult<id> = 
+type AutoResult<id> =
     id extends 0 ? HMagazinesResult :
     id extends 2 ? HGameCGResult :
     id extends 5|6|51|52|53 ? PixivResult :
-    id extends 8 ? NicoNicoSeigaResult : 
+    id extends 8 ? NicoNicoSeigaResult :
     id extends 9 ? DanbooruResult :
     id extends 10 ? DrawrImagesResult :
-    id extends 11 ? NijieImagesResult : 
+    id extends 11 ? NijieImagesResult :
     id extends 12 ? YandereResult :
     id extends 16 ? FakkuResult :
     id extends 18 ? HMiscResult :
@@ -362,7 +363,7 @@ type ErrorResult = Exclude<
             status: number, // any non-zero value
             message: string, // error message
         }
-    }, 
+    },
     {
         header: { status: 0 }
     }
@@ -393,13 +394,9 @@ type Response<dbID extends number> = {
     results: AutoResult<dbID>[],
 }
 
-let snapikey: string;
-new LocalValue("snkey", "").subscribe((key) => {
-    snapikey = key;
-});
 /**
  * Do search on SauceNAO
- * @param {Params} params - Params of the search (url, numres, db, dbmask, dbmaski, dedupe) 
+ * @param {Params} params - Params of the search (url, numres, db, dbmask, dbmaski, dedupe)
  * @returns {Promise<Response} Found pictures
  */
 async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Response<dbID>> {
@@ -407,15 +404,16 @@ async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Res
     for (let i = 0; i < 5; i++) {
         res = await get("https://saucenao.com/search.php", {
             output_type: 2,
-            api_key: snapikey,
+            api_key: storage.snapikey,
             ...params,
         }, true);
 
         if ("results" in res) {
             if (res.header.short_remaining < 10) {
-                await sleep(res.header.short_remaining > 3 ? 1400 : 10000);
+                await sleep(res.header.short_remaining > 3 ? 1400 : 10_000);
             }
-            for (let index in res.header.index) {
+            // eslint-disable-next-line guard-for-in
+            for (const index in res.header.index) {
                 const { status } = res.header.index[index];
                 if (status !== 0) {
                     console.warn(`Server #${index} is offline (status: ${status})`);
@@ -425,7 +423,7 @@ async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Res
                 return res;
             }
             console.warn("No results:", params, res);
-            await sleep(60000);
+            await sleep(60_000);
             continue;
         }
         // if not authorized
@@ -433,32 +431,34 @@ async function saucenao<dbID extends number> (params: Params<dbID>): Promise<Res
             throw new Error(`SauceNAO: ${res.header.message}`);
         }
 
-        const { message, status, short_remaining = 0, long_remaining = 0 } = res.header;
-        console.warn("Replanishing:", { message, status, short_remaining, long_remaining });
-        await sleep(31000);
+        console.warn("Replenishing:", res.header);
+        await sleep(31_000);
     }
-    // @ts-ignore
+    // @ts-expect-error - we know that `res` can be unset
     throw new Error((res as ErrorResult)?.header.message ?? "Run out of search attempts");
 }
 
 const SauceNAO = {
     /**
      * Find pictures on Anime-Pictures that are similar to the given one
-     * @param {string} url - Picture to search 
-     * @param {number} threshold - Minimal similarity of results 
+     * @param {string} url - Picture to search
+     * @param {number} threshold - Minimal similarity of results
      * @returns {Promise<AnimePicturesResult[]>} The found pictures
      */
-    async searchOnAnimePictures (url: string, threshold: number = 50): Promise<AnimePicturesResult[]> {
+    async searchOnAnimePictures (
+        url: string,
+        threshold: number = 50,
+    ): Promise<AnimePicturesResult[]> {
         const res = await saucenao({ url, db: 28, numres: 10 });
-        return res.results.filter((res) => +res.header.similarity >= threshold);
+        return res.results.filter((r) => +r.header.similarity >= threshold);
     },
     /**
-     * Get number of avaivable daily attempts to search (cost 1 attempt)
-     * @returns {Promse<number>} Number of remaining daily attempts
+     * Get number of available daily attempts to search (cost 1 attempt)
+     * @returns {Promise<number>} Number of remaining daily attempts
      */
     async availableAttempts (): Promise<number> {
-        return (await saucenao({ db: 999, url: "https://saucenao.com/images/static/banner_large.gif" }))
-            .header.long_remaining;
+        const res = await saucenao({ db: 999, url: "https://saucenao.com/images/static/banner_large.gif" });
+        return res.header.long_remaining;
     },
 };
 

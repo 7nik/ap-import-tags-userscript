@@ -1,58 +1,43 @@
 <script lang="ts">
-    import Block from "./Block.svelte";
-    import AP from "../libs/net/AnimePictures";
-    import LocalValue from "../libs/localStorage";
-    // import { onMount } from "svelte";
     import type { FullTag } from "../libs/net/AnimePictures";
+    import AP from "../libs/net/AnimePictures";
+    import storage from "../libs/storage.svelte";
+    import Block from "./Block.svelte";
     import TagsField from "./TagsField.svelte";
 
-    let cache: Record<string, FullTag> = {};
-    let mode = "off";
-    let action = new LocalValue(`ma_off`, { addTags: "", removeTags: "" });
+    const cache: Record<string, FullTag> = {};
+    let mode = $state("off");
+    const disabled = $derived(mode === "off");
+    const action = $derived(storage[`ma_${mode}`] ?? { addTags: "", removeTags: "" });
 
-    export let enabled = false;
-    export const apply = async (postId: number) => {
-        if ($action.addTags) {
-            await AP.addTags($action.addTags, postId);
+    export const isEnabled = () => !disabled;
+    export const applyTo = async (postId: number) => {
+        if (action.addTags) {
+            await AP.addTags(action.addTags, postId);
         }
-        if ($action.removeTags) {
-            const tags = $action.removeTags.split("||")
-                .map(name => name.trim().toLocaleLowerCase())
-                .filter(name => name);
+        if (action.removeTags) {
+            const tags = action.removeTags.split("||")
+                .map((name) => name.trim().toLocaleLowerCase())
+                .filter(Boolean);
             for (const tagName of tags) {
                 let tag;
                 if (tagName in cache) {
                     tag = cache[tagName];
                 } else {
+                    // eslint-disable-next-line no-await-in-loop
                     tag = await AP.getTagByName(tagName);
                     cache[tagName] = tag;
                 }
+                // eslint-disable-next-line no-await-in-loop
                 if (tag) await AP.removeTag(tag.id, postId);
             }
         }
-
     };
 
-    $: {
-        if (mode === "off") {
-            enabled = false;
-        } else {
-            enabled = true;
-            action = new LocalValue(`ma_${mode}`, { addTags: "", removeTags: "" });
-        }
-    }
-
-    // onMount(() => {
-    //     // @ts-ignore
-    //     new unsafeWindow.AnimePictures.AutoComplete("addInput", "/pictures/autocomplete_tag", true);
-    //     // @ts-ignore
-    //     new unsafeWindow.AnimePictures.AutoComplete("removeInput", "/pictures/autocomplete_tag", true);
-    // });
-
-    function switchMode(ev: KeyboardEvent) {
+    function switchMode (ev: KeyboardEvent) {
         const focusElem = document.activeElement;
         // return if it is just text typing
-        if (ev.ctrlKey || ev. altKey || ev.shiftKey
+        if (ev.ctrlKey || ev.altKey || ev.shiftKey
             || focusElem?.tagName === "TEXTAREA"
             || (focusElem?.tagName === "INPUT"
                 && (focusElem as HTMLInputElement).type !== "button"
@@ -62,14 +47,15 @@
         }
         if (ev.key === "Escape") {
             mode = "off";
-        } else if (ev.key.match(/\d/)) {
+        } else if (/\d/.test(ev.key)) {
             mode = ev.key;
         }
     }
 
 </script>
+
 <svelte:window on:keydown={switchMode} />
-<svelte:options accessors={true} />
+
 <Block title="Multiaction" hint="
 Click a post to apply the selected action to it.
 Use numerical and Esc keys to switch between actions.
@@ -86,15 +72,15 @@ Use numerical and Esc keys to switch between actions.
         <option label="action 8">8</option>
         <option label="action 9">9</option>
     </select>
-    <div class="break" />
+    <div class="break"></div>
     <TagsField placeholder="tags to add"
-    bind:value={$action.addTags}
-    disabled={!enabled}
+        bind:value={action.addTags}
+        {disabled}
     />
-    <div class="break" />
+    <div class="break"></div>
     <TagsField placeholder="tags to remove"
-        bind:value={$action.removeTags}
-        disabled={!enabled}
+        bind:value={action.removeTags}
+        {disabled}
     />
 </Block>
 
