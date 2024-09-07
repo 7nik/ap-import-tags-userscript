@@ -23,7 +23,7 @@
          * The methods for tag autocompletion
          */
         dataProvider?: DataProvider<any, any>;
-    }
+    };
 
     /* eslint-disable prefer-const */
     let {
@@ -37,12 +37,12 @@
 
     let inputElem: HTMLInputElement;
     let tags: MatchedTag[] = $state([]);
-    let selTag: MatchedTag|null = $state(null);
+    let selTag: MatchedTag | null = $state(null);
     let focused = $state(false);
     let query = $state("");
     const show = $derived(focused && tags.length > 0);
 
-    function getCurrentTag () {
+    function getCurrentTag() {
         const str = value.slice(0, inputElem.selectionStart!);
         const delim = str.match(/,\s*/);
         let pos = 0;
@@ -53,7 +53,7 @@
     }
 
     let timer: number;
-    function autocomplete () {
+    function autocomplete() {
         let tagName = getCurrentTag();
         for (const prefix of dataProvider.tagPrefixes) {
             if (tagName.startsWith(prefix)) tagName = tagName.slice(prefix.length);
@@ -64,13 +64,13 @@
         }
     }
 
-    async function loadAutocomplete (tagName: string) {
+    async function loadAutocomplete(tagName: string) {
         tags = await dataProvider.autocompleteTag(tagName);
         query = tagName;
         selTag = null;
     }
 
-    function selectTag (ev: KeyboardEvent | MouseEvent) {
+    function selectTag(ev: KeyboardEvent | MouseEvent) {
         // choose the clicked tag
         if (ev instanceof MouseEvent) {
             const elem = (ev.target as HTMLElement).closest("li");
@@ -96,14 +96,14 @@
                 case "ArrowDown":
                     selTag = selTag
                         ? tags[Math.min(tags.indexOf(selTag) + 1, tags.length - 1)]
-                        : tags[0] ?? null;
+                        : (tags[0] ?? null);
                     ev.preventDefault();
                     break;
                 // select tag above
                 case "ArrowUp":
                     selTag = selTag
                         ? tags[Math.max(tags.indexOf(selTag) - 1, 0)]
-                        : tags.at(-1) ?? null;
+                        : (tags.at(-1) ?? null);
                     ev.preventDefault();
                     break;
                 default:
@@ -116,7 +116,7 @@
         insertTag(selTag?.mainName ?? "");
     }
 
-    function insertTag (tagName: string, canAppend = false) {
+    function insertTag(tagName: string, canAppend = false) {
         let oldTagName = getCurrentTag();
         for (const prefix of dataProvider.tagPrefixes) {
             if (oldTagName.startsWith(prefix)) {
@@ -142,28 +142,34 @@
 </script>
 
 <div>
-    <input {placeholder}
+    <input
+        {placeholder}
         type="search"
         autocomplete="off"
         bind:value
         bind:this={inputElem}
         onkeydown={selectTag}
         oninput={autocomplete}
-        onfocus={() => { focused = true; }}
-        onblur={() => { focused = false; }}
+        onfocus={() => {
+            focused = true;
+        }}
+        onblur={() => {
+            focused = false;
+        }}
         {disabled}
     />
     <ul class:show>
-        {#each tags as tag }
+        {#each tags as tag}
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <li
                 class="cat-{tag.category}"
-                class:active="{tag === selTag}"
+                class:active={tag === selTag}
                 onmousedown={selectTag}
             >
                 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                 {@html tag.matchedName.replace(query, `<b>${query}</b>`)}
-                {#if tag.matchedName !== tag.mainName} → {tag.mainName}{/if}
+                {#if tag.matchedName !== tag.mainName}
+                    → {tag.mainName}{/if}
             </li>
         {/each}
     </ul>
@@ -185,6 +191,7 @@
         top: 100%;
         height: 0;
         width: 100%;
+        z-index: 1;
     }
     ul.show {
         visibility: visible;

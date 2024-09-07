@@ -142,7 +142,7 @@ type AutocompleteTag = {
 }
 
 type AutocompleteTagResult = {
-    tags_list: AutocompleteTag[],
+    tags: AutocompleteTag[],
 }
 
 type SearchPostsResultRaw = {
@@ -240,10 +240,10 @@ const AnimePictures = {
      * @returns matched tags
      */
     async autocompleteTag (tagName: string): Promise<AutocompleteTag[]> {
-        const res: AutocompleteTagResult = await post(`${HOST}/pictures/autocomplete_tag`, {
+        const res: AutocompleteTagResult = await get(`${HOST}/api/v3/tags:autocomplete`, {
             tag: tagName,
         });
-        return res.tags_list;
+        return res.tags;
     },
     /**
      * Get post info by id
