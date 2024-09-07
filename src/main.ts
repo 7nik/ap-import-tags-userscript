@@ -32,6 +32,7 @@ function addStartAppButton() {
     const li = document.createElement("li");
 
     const a = document.createElement("a");
+    // TODO change to a better name, plus prefix in localStore
     a.textContent = "Import tags";
     a.href = "#";
     a.addEventListener("click", () => {

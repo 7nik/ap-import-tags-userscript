@@ -1,40 +1,40 @@
 <script lang="ts">
     import { replace } from "svelte-spa-router";
-    import TagImporter from "../libs/importer.svelte";
+    import PostMatcher from "../libs/matcher.svelte";
     import dataProviders from "../libs/providers";
     import Block from "../parts/Block.svelte";
 
     const { params }: { params: { query: string; provider: string } } = $props();
 
-    const importer = new TagImporter(dataProviders[params.provider], params.query);
+    const matcher = new PostMatcher(dataProviders[params.provider], params.query);
     $effect(() => {
-        if (importer.state.finished) replace("/home");
+        if (matcher.state.finished) replace("/home");
     });
     let pending = $state(true);
 
     start(false);
 
     async function start(repeat: boolean) {
-        if (!importer.state.paused) {
-            importer.pause();
+        if (!matcher.state.paused) {
+            matcher.pause();
             return;
         }
         // if couldn't resume due to low number of available attempts
         try {
             pending = true;
-            if (await importer.resume(repeat)) {
+            if (await matcher.resume(repeat)) {
                 return;
             }
-            const { availableAttempts, requiredAttempts } = importer.state;
+            const { availableAttempts, requiredAttempts } = matcher.state;
             if (
                 // eslint-disable-next-line no-restricted-globals, no-alert, max-len
                 confirm(
-                    `The import requires ~${requiredAttempts} searches,
+                    `The matching requires ~${requiredAttempts} searches,
                     but on SauceNAO you have only ${availableAttempts} tries for now.
                     Continue?`,
                 )
             ) {
-                importer.resume(repeat, true);
+                matcher.resume(repeat, true);
             }
         } catch (ex) {
             console.error(ex);
@@ -45,14 +45,14 @@
 
     function cancel() {
         // eslint-disable-next-line no-restricted-globals, no-alert
-        if (confirm("Are you sure that you want cancel importing? All progress will be lost!")) {
-            importer.pause();
+        if (confirm("Are you sure that you want cancel matching? All progress will be lost!")) {
+            matcher.pause();
             replace("/home");
         }
     }
 
     function onbeforeunload(ev: BeforeUnloadEvent) {
-        if (!importer.state.finished) {
+        if (!matcher.state.finished) {
             ev.preventDefault();
         }
     }
@@ -60,18 +60,18 @@
 
 <svelte:window {onbeforeunload} />
 
-<Block title="Importing tags">
-    {#if importer.state.error !== null}
-        <span class="red">Error: {importer.state.error}</span>
+<Block title="Matching posts">
+    {#if matcher.state.error !== null}
+        <span class="red">Error: {matcher.state.error}</span>
         <br />
     {/if}
-    <span>{importer.state.status}</span>
+    <span>{matcher.state.status}</span>
     <progress
         max="100"
-        value={importer.state.progress}
+        value={matcher.state.progress}
     ></progress>
     <center>
-        {#if importer.state.paused}
+        {#if matcher.state.paused}
             <input
                 type="button"
                 value="retry"
@@ -88,7 +88,7 @@
             <input
                 type="button"
                 value="pause"
-                onclick={() => importer.pause()}
+                onclick={() => matcher.pause()}
                 disabled={pending}
             />
         {/if}

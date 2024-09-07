@@ -38,16 +38,22 @@ const dataProvider: APDataProvider = {
     },
     async *findPosts(query) {
         let found = 0;
-        let page = 0;
-        const { posts, totalPages, totalPosts } = await AP.searchPosts(0, {
-            searchTags: convertQuery(query),
-        });
-        for (; page < totalPages; page += 1) {
+        let posts: ShortPostInfo[];
+        let totalPages = Infinity;
+        let totalPosts = Infinity;
+
+        for (let page = 0; page < totalPages; page += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            ({ posts, totalPages, totalPosts } = await AP.searchPosts(page, {
+                searchTags: convertQuery(query),
+            }));
             for (const post of posts) {
                 found += 1;
                 yield { post, progress: found / totalPosts };
             }
-            page += 1;
+        }
+        if (found < totalPosts) {
+            yield { post: {} as any, progress: 1 };
         }
     },
     getImage({ md5, ext }, size) {

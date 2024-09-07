@@ -1,42 +1,37 @@
-import type { SavedResult } from "./importer.svelte";
-import AP from "./net/AnimePictures";
-import APPostProvider from "./providers/APDataProvider";
+import type { SavedResult } from "./matcher.svelte";
+import type { DataProvider } from "./providers";
 import storage from "./storage.svelte";
 
-export default function search(query: string) {
-    const result: SavedResult = {
-        providerName: "AnimePictures",
-        query,
-        date: Date.now(),
-        results: [],
-    };
+export default function search(provider: DataProvider<any, any>, query: string) {
     const state = $state({
         progress: 0,
+        link: "",
     });
-    let page = 0;
-    let resp;
+
     (async () => {
-        const tags = query.split("&&");
-        const searchTags = tags.filter((t) => !t.startsWith("-")).join("&&");
-        const excludeTags = tags
-            .filter((t) => t.startsWith("-"))
-            .map((t) => t.slice(1))
-            .join("||");
-        do {
+        const result: SavedResult = {
+            providerName: provider.sourceName,
+            query,
+            date: Date.now(),
+            results: [],
+        };
+
+        const iterator = provider.findPosts(query);
+        let match = await iterator.next();
+        while (!match.done) {
+            result.results.push({
+                source: null,
+                result: provider.simplifyPost(match.value.post),
+                sim: 0,
+            });
+            state.progress = match.value.progress;
             // eslint-disable-next-line no-await-in-loop
-            resp = await AP.searchPosts(page, { searchTags, excludeTags });
-            result.results.push(
-                ...resp.posts.map((p) => ({
-                    source: null,
-                    result: APPostProvider.simplifyPost(p),
-                    sim: 0,
-                })),
-            );
-            page += 1;
-            state.progress = (100 * page) / resp.totalPages;
-        } while (query && page < resp.totalPages);
-        state.progress = 100;
-        storage.search = result;
+            match = await iterator.next();
+        }
+
+        storage[`res_${result.date}`] = result;
+        state.link = `/res/${result.date}/0`;
     })();
+
     return state;
 }

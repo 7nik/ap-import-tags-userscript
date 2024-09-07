@@ -1,6 +1,6 @@
 <script lang="ts">
     import type MultiAction from "./MultiAction.svelte";
-    import type { Result } from "../libs/importer.svelte";
+    import type { Result } from "../libs/matcher.svelte";
     import type { DataProvider, SimplePost } from "../libs/providers";
     import { GM } from "$";
     import { IMAGE_PLACEHOLDER, POST_STATUS_TEXT } from "../libs/constant";

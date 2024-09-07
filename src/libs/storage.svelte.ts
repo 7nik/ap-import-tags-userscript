@@ -1,4 +1,4 @@
-import type { SavedResult } from "./importer.svelte";
+import type { SavedResult } from "./matcher.svelte";
 import { untrack } from "svelte";
 
 const PREFIX = "AP_tag_importer_";
@@ -14,7 +14,6 @@ type LocalData = {
     isModerator: boolean;
     [k: `ma_${string}`]: { addTags: string; removeTags: string };
     // search results
-    search: SavedResult;
     [k: `res_${string}`]: SavedResult;
 };
 

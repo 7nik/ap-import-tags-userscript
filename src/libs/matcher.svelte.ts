@@ -32,7 +32,7 @@ export type { State, Result, SavedResult };
 /**
  * Class to take pics on an image board and find the most similar on Anime-pictures using SauceNAO
  */
-export default class Importer<
+export default class Matcher<
     Post extends { id?: any },
     Provider extends DataProvider<Post, SimplePost>,
 > {

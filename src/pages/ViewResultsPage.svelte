@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SavedResult } from "../libs/importer.svelte";
+    import type { SavedResult } from "../libs/matcher.svelte";
     import { GM } from "$";
     import { mount, onDestroy, unmount } from "svelte";
     import dataProviders from "../libs/providers";
@@ -11,8 +11,7 @@
 
     const { params }: { params: { name: string; page: number } } = $props();
 
-    const search: SavedResult =
-        (params.name === "search" ? storage.search : storage[`res_${params.name}`]) ?? ({} as any);
+    const search: SavedResult = storage[`res_${params.name}`] ?? ({ results: [] } as any);
     const dataProvider = dataProviders[search.providerName];
     const baseUrl = `#/res/${params.name}/`;
 
