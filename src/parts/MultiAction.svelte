@@ -16,7 +16,8 @@
             await AP.addTags(action.addTags, postId);
         }
         if (action.removeTags) {
-            const tags = action.removeTags.split("||")
+            const tags = action.removeTags
+                .split("||")
                 .map((name) => name.trim().toLocaleLowerCase())
                 .filter(Boolean);
             for (const tagName of tags) {
@@ -34,14 +35,17 @@
         }
     };
 
-    function switchMode (ev: KeyboardEvent) {
+    function switchMode(ev: KeyboardEvent) {
         const focusElem = document.activeElement;
         // return if it is just text typing
-        if (ev.ctrlKey || ev.altKey || ev.shiftKey
-            || focusElem?.tagName === "TEXTAREA"
-            || (focusElem?.tagName === "INPUT"
-                && (focusElem as HTMLInputElement).type !== "button"
-                && (focusElem as HTMLInputElement).type !== "submit")
+        if (
+            ev.ctrlKey ||
+            ev.altKey ||
+            ev.shiftKey ||
+            focusElem?.tagName === "TEXTAREA" ||
+            (focusElem?.tagName === "INPUT" &&
+                (focusElem as HTMLInputElement).type !== "button" &&
+                (focusElem as HTMLInputElement).type !== "submit")
         ) {
             return;
         }
@@ -51,15 +55,17 @@
             mode = ev.key;
         }
     }
-
 </script>
 
 <svelte:window on:keydown={switchMode} />
 
-<Block title="Multiaction" hint="
+<Block
+    title="Multiaction"
+    hint="
 Click a post to apply the selected action to it.
 Use numerical and Esc keys to switch between actions.
-">
+"
+>
     <select bind:value={mode}>
         <option label="disabled">off</option>
         <option label="action 1">1</option>
@@ -73,19 +79,22 @@ Use numerical and Esc keys to switch between actions.
         <option label="action 9">9</option>
     </select>
     <div class="break"></div>
-    <TagsField placeholder="tags to add"
+    <TagsField
+        placeholder="tags to add"
         bind:value={action.addTags}
         {disabled}
     />
     <div class="break"></div>
-    <TagsField placeholder="tags to remove"
+    <TagsField
+        placeholder="tags to remove"
         bind:value={action.removeTags}
         {disabled}
     />
 </Block>
 
 <style>
-    select, .break {
+    select,
+    .break {
         margin-top: 10px;
     }
 </style>

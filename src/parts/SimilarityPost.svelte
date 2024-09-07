@@ -6,18 +6,20 @@
     import { IMAGE_PLACEHOLDER, POST_STATUS_TEXT } from "../libs/constant";
     import APPostProvider from "../libs/providers/APDataProvider";
     import storage from "../libs/storage.svelte";
-    import {
-        contrastColor, eroticColor, isPostPublished, siteLang,
-    } from "../libs/utils.svelte";
+    import { contrastColor, eroticColor, isPostPublished, siteLang } from "../libs/utils.svelte";
 
-    const { post, multiAction, dataProvider }: {
-        post: Result,
-        multiAction: Pick<MultiAction, "isEnabled"|"applyTo">,
-        dataProvider: DataProvider<any, any>,
+    const {
+        post,
+        multiAction,
+        dataProvider,
+    }: {
+        post: Result;
+        multiAction: Pick<MultiAction, "isEnabled" | "applyTo">;
+        dataProvider: DataProvider<any, any>;
     } = $props();
     const result = $derived(post.result);
 
-    function getImage (provider: DataProvider<any, any>, data: SimplePost|null) {
+    function getImage(provider: DataProvider<any, any>, data: SimplePost | null) {
         const origSrc = $derived(data ? provider.getImage(data, storage.postSize ?? "300") : "");
         let src = $state("");
         $effect(() => {
@@ -29,7 +31,7 @@
             GM.xmlHttpRequest({
                 url: origSrc,
                 responseType: "blob",
-                onload (resp) {
+                onload(resp) {
                     src = window.URL.createObjectURL(resp.response);
                 },
             });
@@ -43,7 +45,7 @@
     const lang = siteLang();
 
     let pending = $state(false);
-    function handleClick (ev: MouseEvent) {
+    function handleClick(ev: MouseEvent) {
         if (pending) {
             ev.preventDefault();
             return;
@@ -51,17 +53,25 @@
         if (multiAction.isEnabled()) {
             ev.preventDefault();
             pending = true;
-            multiAction.applyTo(result.id).finally(() => { pending = false; });
+            multiAction.applyTo(result.id).finally(() => {
+                pending = false;
+            });
         }
     }
 </script>
 
-<span class="post" class:pending>
-    <div class="img_block_text" style="
+<span
+    class="post"
+    class:pending
+>
+    <div
+        class="img_block_text"
+        style="
         background-image: linear-gradient(to right, transparent, rgb({result.color}), transparent);
         color: {contrastColor(result)};"
     >
-        <a href="/pictures/view_posts/0?res_x={result.width}&res_y={result.height}&lang={lang}"
+        <a
+            href="/pictures/view_posts/0?res_x={result.width}&res_y={result.height}&lang={lang}"
             title="Anime pictures {result.width}x{result.height}"
             target="_blank"
             style="background-color: {eroticColor(result)};"
@@ -70,29 +80,33 @@
         </a>
         <span title="Tags Num">({result.tags_count})</span>
         <span title="Similarity">{Math.round(+post.sim)}%</span>
-        <br hidden={isPostPublished(result)}>
+        <br hidden={isPostPublished(result)} />
         {POST_STATUS_TEXT[result.status]}
     </div>
-    <a class="db_link"
+    <a
+        class="db_link"
         href={post.source ? dataProvider.getLink(post.source) : ""}
         title="{dataProvider.sourceName} post"
         target="_blank"
         onclick={handleClick}
-    > </a>
-    <a class="ap_link"
+    >
+    </a>
+    <a
+        class="ap_link"
         href="/pictures/view_post/{result.id}?lang={lang}"
         title="Anime pictures post"
         target="_blank"
         rel="opener"
         onclick={handleClick}
-    > </a>
+    >
+    </a>
     <div class="db_img">
         <!-- svelte-ignore a11y_missing_attribute -->
-        <img src="{dbImg}">
+        <img src={dbImg} />
     </div>
     <div class="ap_img">
         <!-- svelte-ignore a11y_missing_attribute -->
-        <img src="{apImg}">
+        <img src={apImg} />
     </div>
 </span>
 
@@ -125,7 +139,8 @@
             color: inherit;
         }
     }
-    .db_img, .ap_img {
+    .db_img,
+    .ap_img {
         position: absolute;
         top: 0;
         left: 0;

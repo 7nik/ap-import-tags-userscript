@@ -14,6 +14,7 @@ module.exports = {
         "plugin:unicorn/recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:svelte/recommended",
+        "prettier",
     ],
     plugins: [
         "unicorn",

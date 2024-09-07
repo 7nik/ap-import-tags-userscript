@@ -1,7 +1,11 @@
 /* eslint-disable no-await-in-loop */
 import MT, { type PostInfo, type TagCategory as MTCategory } from "../net/Minitokyo";
 import {
-    type DataProvider, Auth, type SimplePost, type FoundPost, TagCategory,
+    type DataProvider,
+    Auth,
+    type SimplePost,
+    type FoundPost,
+    TagCategory,
 } from "./DataProvider";
 
 const TAG_CATEGORY: Partial<Record<MTCategory, TagCategory>> = {
@@ -21,7 +25,7 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
     helpInfo: `Add at beginning "w:" ("wallpapers:"), "a:" ("arts:"), or "s:" ("scans:") \
         plus "u:" ("user:") to specify search results`,
     tagPrefixes: MT.tagPrefixes,
-    async postCount (query: string) {
+    async postCount(query: string) {
         const parsed = MT.parseQuery(query);
         if (parsed.category) {
             const res = await MT.getCounts(query);
@@ -30,7 +34,7 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
         const res = await MT.getCounts(query);
         return res.wallpaper + res.art + res.scan;
     },
-    async* findPosts (query: string): AsyncIterableIterator<FoundPost<PostInfo>> {
+    async *findPosts(query: string): AsyncIterableIterator<FoundPost<PostInfo>> {
         const PAGE_SIZE = 24;
         const total = await this.postCount(query);
         const lastPage = Math.ceil(total / PAGE_SIZE);
@@ -63,23 +67,23 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
             }
         }
     },
-    getImage ({ id }, size) {
+    getImage({ id }, size) {
         const dir0 = size === "150" ? "thumbs" : "view"; // 180px or 500px
         const dir1 = (id % 50).toString().padStart(2, "0");
-        const dir2 = ((id - +dir1) % 2500 / 50).toString().padStart(2, "0");
+        const dir2 = (((id - +dir1) % 2500) / 50).toString().padStart(2, "0");
         return `http://static2.minitokyo.net/${dir0}/${dir1}/${dir2}/${id}.jpg`;
     },
-    getLink ({ id }) {
+    getLink({ id }) {
         return `http://gallery.minitokyo.net/view/${id}`;
     },
-    simplifyPost (post) {
+    simplifyPost(post) {
         return {
             id: post.id ?? 1,
             md5: "",
             ext: "",
         };
     },
-    async autocompleteTag (query) {
+    async autocompleteTag(query) {
         const tags = await MT.autocompleteTag(query);
         return tags.map((tag) => {
             const name = tag.tag.toLowerCase();

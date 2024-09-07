@@ -8,20 +8,22 @@
 
     let dataProvider = dataProviders.Danbooru;
 
-    let searches = localStorage.keys()
-        .sort().reverse()
+    let searches = localStorage
+        .keys()
+        .sort()
+        .reverse()
         .filter((name) => name.startsWith("res_"))
         .map((name) => localStorage.get(name as any) as SavedResult);
     let form: HTMLFormElement;
     let query = "";
 
-    function startImport (ev: Event) {
+    function startImport(ev: Event) {
         if (!form.checkValidity()) return;
         ev.preventDefault();
         push(`/import/${dataProvider.sourceName}/${encodeURIComponent(query)}`);
     }
 
-    function deleteResult (search: SavedResult) {
+    function deleteResult(search: SavedResult) {
         searches = searches.filter((s) => s !== search);
         localStorage.delete(`res_${search.date}`);
     }
@@ -43,23 +45,28 @@
                 {dataProvider}
                 bind:value={query}
             />
-            <span title={dataProvider.helpInfo} class="question_icon"></span>
+            <span
+                title={dataProvider.helpInfo}
+                class="question_icon"
+            ></span>
         </span>
         <span>Danbooru key:</span>
         <input
             type="text"
             placeholder="Danbooru login, space, API key (desired)"
             bind:value={localStorage.dbkey}
-            pattern=".+ \w{"{24}"}"
+            pattern={`.+ \\w{24}`}
         />
         <span>SauceNAO key:</span>
         <input
             type="text"
             placeholder="SauceNAO API key (optional)"
             bind:value={localStorage.snapikey}
-            pattern="[0-9a-f]{"{40}"}"
+            pattern={`[0-9a-f]{40}`}
         />
-        <input type="submit" value="Start importing"
+        <input
+            type="submit"
+            value="Start importing"
             onclick={startImport}
             onsubmit={startImport}
         />
@@ -72,8 +79,11 @@
             <a href="#/res/{search.date}/0">{search.providerName}: {search.query}</a>
             <!-- eslint-disable-next-line max-len -->
             <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-            <span class="icon_delete" onclick={() => deleteResult(search)}></span>
-            <br>
+            <span
+                class="icon_delete"
+                onclick={() => deleteResult(search)}
+            ></span>
+            <br />
             {search.results.length} found pictures {new Date(search.date).toLocaleString()},
         </div>
     {:else}
@@ -101,7 +111,7 @@
         width: 16px;
         height: 16px;
         float: right;
-        margin: 3px 0 0 10px
+        margin: 3px 0 0 10px;
     }
     div {
         border-bottom: 1px solid #8888;

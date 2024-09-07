@@ -1,7 +1,5 @@
 import DB, { type PostInfo, TagCategory as DBCategory } from "../net/Danbooru";
-import {
-    type DataProvider, Auth, type SimplePost, TagCategory,
-} from "./DataProvider";
+import { type DataProvider, Auth, type SimplePost, TagCategory } from "./DataProvider";
 
 const TAG_CATEGORY: Record<DBCategory, TagCategory> = {
     [DBCategory.artist]: TagCategory.artist,
@@ -11,10 +9,13 @@ const TAG_CATEGORY: Record<DBCategory, TagCategory> = {
     [DBCategory.meta]: TagCategory.meta,
 };
 
-function convertQuery (query: string) {
+function convertQuery(query: string) {
     // assume it's already in danbooru's format
     if (query.includes("_")) return query;
-    return query.split(",").map((q) => q.trim().replaceAll(" ", "_")).join(" ");
+    return query
+        .split(",")
+        .map((q) => q.trim().replaceAll(" ", "_"))
+        .join(" ");
 }
 
 const dataProvider: DataProvider<PostInfo, SimplePost> = {
@@ -22,10 +23,10 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
     authType: Auth.desired,
     helpInfo: "Any Danbooru things should work here",
     tagPrefixes: ["-"],
-    postCount (query) {
+    postCount(query) {
         return DB.postCount(convertQuery(query));
     },
-    async* findPosts (query) {
+    async *findPosts(query) {
         const PAGE_SIZE = 20;
         const total = await this.postCount(query);
         const lastPage = Math.ceil(total / PAGE_SIZE);
@@ -68,7 +69,7 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
             }
         }
     },
-    getImage ({ md5, ext }, size) {
+    getImage({ md5, ext }, size) {
         if (ext === "swf") return "https://danbooru.donmai.us/images/flash-preview.png";
         if (!md5) return "https://cdn.donmai.us/images/download-preview.png";
         const folder = {
@@ -79,17 +80,17 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
         ext = size === "500" ? "webp" : "jpg";
         return `https://cdn.donmai.us/${folder}/${md5.slice(0, 2)}/${md5.slice(2, 4)}/${md5}.${ext}`;
     },
-    getLink ({ id }) {
+    getLink({ id }) {
         return `https://danbooru.donmai.us/posts/${id}`;
     },
-    simplifyPost (post) {
+    simplifyPost(post) {
         return {
             id: post.id ?? 1,
             md5: post.md5 ?? "",
             ext: post.file_ext ?? "",
         };
     },
-    async autocompleteTag (query) {
+    async autocompleteTag(query) {
         const tags = await DB.autocompleteTag(query.replaceAll(" ", "_"));
         return tags.map((tag) => ({
             matchedName: (tag.antecedent ?? tag.value).replaceAll("_", " "),

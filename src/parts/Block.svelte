@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
 
-    const { title, hint, children }: { title:string, hint?:string, children:Snippet } = $props();
+    const { title, hint, children }: { title: string; hint?: string; children: Snippet } = $props();
 
-    function addClass (elem: HTMLElement) {
+    function addClass(elem: HTMLElement) {
         elem.classList.add(elem.closest("#sidebar") ? "sidebar_block" : "post_content");
     }
 </script>
@@ -12,7 +12,10 @@
     <div class="title">
         {title}
         {#if hint}
-            <span title={hint} class="question_icon"></span>
+            <span
+                title={hint}
+                class="question_icon"
+            ></span>
         {/if}
     </div>
     <div class="body">

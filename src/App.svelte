@@ -18,14 +18,14 @@
         }
     });
 
-    let searching: { progress:number } | null = $state(null);
+    let searching: { progress: number } | null = $state(null);
     const form = document.querySelector("#sidebar form");
     const input = form?.querySelector("[type=search]") as HTMLInputElement;
     const button = form?.querySelector("[type=submit]") as HTMLInputElement;
     input?.addEventListener("keydown", doSearch, true);
     button?.addEventListener("click", doSearch, true);
 
-    function doSearch (ev: Event) {
+    function doSearch(ev: Event) {
         if (ev instanceof KeyboardEvent && ev.key !== "Enter") return;
         ev.preventDefault();
         ev.stopPropagation();
@@ -57,8 +57,11 @@
 {#if searching}
     <div>
         <Block title="Searching">
-            Gathering the pictures of {input.value} <br>
-            <progress max="100" value={searching.progress}></progress>
+            Gathering the pictures of {input.value} <br />
+            <progress
+                max="100"
+                value={searching.progress}
+            ></progress>
         </Block>
     </div>
 {/if}
@@ -71,7 +74,7 @@
         width: 100%;
         height: 100%;
         display: flex;
-        background: #000C;
+        background: #000c;
         z-index: 15;
     }
     div > :global(div) {

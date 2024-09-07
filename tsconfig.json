@@ -2,7 +2,7 @@
   "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
     "ignoreDeprecations": "5.0",
-    "target": "es2022",
+    "target": "ESNext",
     "sourceMap": false,
     "inlineSources": false,
     "strict": true,

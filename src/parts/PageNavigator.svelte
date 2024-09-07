@@ -1,6 +1,12 @@
 <script lang="ts">
-    const { pageCount, currPage, baseUrl = "" }: {
-        pageCount:number, currPage:number, baseUrl?:string,
+    const {
+        pageCount,
+        currPage,
+        baseUrl = "",
+    }: {
+        pageCount: number;
+        currPage: number;
+        baseUrl?: string;
     } = $props();
 
     const pages = $derived.by(() => {
@@ -41,15 +47,16 @@
 
 <style>
     .numeric_pages {
-        padding-top: .5rem;
-        padding-bottom: .5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
         text-align: center;
     }
     .active {
         background: var(--numeric-pages-active-color);
         box-shadow: #000000bf 0 0 inset;
     }
-    span, a {
+    span,
+    a {
         display: inline-block;
         text-decoration: none;
         height: 25px;
@@ -60,7 +67,7 @@
         margin-right: 2px;
         box-shadow: var(--numeric-pages-box-shadow);
         color: var(--b-color);
-        transition: all .5s ease-in-out;
+        transition: all 0.5s ease-in-out;
     }
     a:hover {
         background: var(--numeric-pages-hover-color);

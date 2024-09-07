@@ -5,23 +5,23 @@ const PREFIX = "AP_tag_importer_";
 
 type LocalData = {
     // api thins
-    dbkey: string,
-    snapikey: string,
+    dbkey: string;
+    snapikey: string;
     // settings
-    pageSize: number,
-    postSize: "150"|"300"|"500",
-    showSource: boolean,
-    isModerator: boolean,
-    [k: `ma_${string}`]: { addTags: string, removeTags: string },
+    pageSize: number;
+    postSize: "150" | "300" | "500";
+    showSource: boolean;
+    isModerator: boolean;
+    [k: `ma_${string}`]: { addTags: string; removeTags: string };
     // search results
-    search: SavedResult,
-    [k: `res_${string}`]: SavedResult,
-}
+    search: SavedResult;
+    [k: `res_${string}`]: SavedResult;
+};
 
 const cache: Partial<LocalData> = $state({});
 
 const storageMethods = {
-    get<N extends keyof LocalData> (name: N): LocalData[N]|null {
+    get<N extends keyof LocalData>(name: N): LocalData[N] | null {
         if (!(name in cache) && PREFIX.concat(name) in window.localStorage) {
             untrack(() => {
                 cache[name] = JSON.parse(window.localStorage[PREFIX.concat(name)]);
@@ -33,15 +33,15 @@ const storageMethods = {
         }
         return cache[name] ?? null;
     },
-    set<N extends keyof LocalData> (name: N, value: LocalData[N]) {
+    set<N extends keyof LocalData>(name: N, value: LocalData[N]) {
         cache[name] = value;
         window.localStorage[PREFIX.concat(name)] = JSON.stringify(value);
     },
-    delete (name: keyof LocalData) {
+    delete(name: keyof LocalData) {
         delete cache[name];
         window.localStorage.removeItem(PREFIX.concat(name));
     },
-    keys () {
+    keys() {
         return Reflect.ownKeys(window.localStorage)
             .filter((name) => typeof name === "string" && name.startsWith(PREFIX))
             .map((name) => (name as string).slice(PREFIX.length));
@@ -49,20 +49,20 @@ const storageMethods = {
 };
 
 const storage = new Proxy(storageMethods, {
-    get (_, prop) {
+    get(_, prop) {
         if (prop in storageMethods) return storageMethods[prop as keyof typeof storageMethods];
         return storageMethods.get(prop as keyof LocalData);
     },
-    set (_, prop, value) {
+    set(_, prop, value) {
         if (prop in storageMethods) return false;
         storageMethods.set(prop as keyof LocalData, value);
         return true;
     },
-    deleteProperty (_, prop) {
+    deleteProperty(_, prop) {
         storageMethods.delete(prop as keyof LocalData);
         return true;
     },
-    ownKeys () {
+    ownKeys() {
         return storageMethods.keys();
     },
 }) as Partial<LocalData> & Readonly<typeof storageMethods>;

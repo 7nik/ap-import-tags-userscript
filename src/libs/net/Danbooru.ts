@@ -2,81 +2,81 @@
 import storage from "../storage.svelte";
 import { get, sleep } from "./ajax";
 
-type Params = Record<string, string|number|undefined>;
+type Params = Record<string, string | number | undefined>;
 type timestamp = string;
 
 type BadResponse = {
-    success: false,
-    message: string,
-    backtrace: string[],
-}
+    success: false;
+    message: string;
+    backtrace: string[];
+};
 
 type BasePostInfo = {
-    created_at: timestamp, // RFC 3339 format
-    uploader_id: number,
-    updated_at: timestamp,
-    approver_id: number|null,
-    last_commented_at: timestamp|null,
-    last_comment_bumped_at: timestamp|null,
-    last_noted_at: timestamp|null,
-    score: number,
-    source: string|null,
-    pixiv_id: number|null,
-    rating: "g"|"s"|"q"|"e"|null,
-    image_width: number,
-    image_height: number,
-    fav_count: number,
-    file_size: number,
-    parent_id: number|null,
-    has_children: boolean,
-    has_active_children: boolean,
-    has_visible_children: boolean,
-    has_large: boolean,
-    tag_count: number,
-    tag_count_general: number,
-    tag_count_artist: number,
-    tag_count_character: number,
-    tag_count_copyright: number,
-    tag_count_meta: number,
-    tag_string: string, // all tags
-    tag_string_general: string,
-    tag_string_character: string,
-    tag_string_copyright: string,
-    tag_string_artist: string,
-    tag_string_meta: string,
-    pool_string: string,
-    up_score: number,
-    down_score: number,
-    is_pending: boolean,
-    is_flagged: boolean,
-    is_deleted: boolean,
-    is_banned: boolean,
-    is_note_locked: boolean,
-    is_rating_locked: boolean,
-    is_status_locked: boolean,
-    bit_flags: number,
-}
+    created_at: timestamp; // RFC 3339 format
+    uploader_id: number;
+    updated_at: timestamp;
+    approver_id: number | null;
+    last_commented_at: timestamp | null;
+    last_comment_bumped_at: timestamp | null;
+    last_noted_at: timestamp | null;
+    score: number;
+    source: string | null;
+    pixiv_id: number | null;
+    rating: "g" | "s" | "q" | "e" | null;
+    image_width: number;
+    image_height: number;
+    fav_count: number;
+    file_size: number;
+    parent_id: number | null;
+    has_children: boolean;
+    has_active_children: boolean;
+    has_visible_children: boolean;
+    has_large: boolean;
+    tag_count: number;
+    tag_count_general: number;
+    tag_count_artist: number;
+    tag_count_character: number;
+    tag_count_copyright: number;
+    tag_count_meta: number;
+    tag_string: string; // all tags
+    tag_string_general: string;
+    tag_string_character: string;
+    tag_string_copyright: string;
+    tag_string_artist: string;
+    tag_string_meta: string;
+    pool_string: string;
+    up_score: number;
+    down_score: number;
+    is_pending: boolean;
+    is_flagged: boolean;
+    is_deleted: boolean;
+    is_banned: boolean;
+    is_note_locked: boolean;
+    is_rating_locked: boolean;
+    is_status_locked: boolean;
+    bit_flags: number;
+};
 
 // this info isn't provided if an anon or regular user attempts to get
 // a post which is banned or tagged as loli/shota
-type ExtraPostInfo =  {
-    id: number,
-    md5: string,
-    file_ext: string,
-    file_url: string, // full link to original
-    large_file_url: string, // 850px width ver or original
-    preview_file_url: string, // 150px of the biggest side
-}
+type ExtraPostInfo = {
+    id: number;
+    md5: string;
+    file_ext: string;
+    file_url: string; // full link to original
+    large_file_url: string; // 850px width ver or original
+    preview_file_url: string; // 150px of the biggest side
+};
 
-type OptionalPart<T> = T | Partial<Record<keyof T, undefined>>
+type OptionalPart<T> = T | Partial<Record<keyof T, undefined>>;
 
 type PostInfo = BasePostInfo & OptionalPart<ExtraPostInfo>;
 
 type PostCount = {
     counts: {
-        posts: number,
-    }
-}
+        posts: number;
+    };
+};
 
 export enum TagCategory {
     general = 0,
@@ -87,22 +87,22 @@ export enum TagCategory {
 }
 
 type AutocompleteTag = {
-    type: "tag" | "tag-alias",
+    type: "tag" | "tag-alias";
     /**
      * tag name with spaces
      */
-    label: string,
+    label: string;
     /**
      * tag name with underscores
      */
-    value: string,
-    category: TagCategory,
-    post_count: number,
+    value: string;
+    category: TagCategory;
+    post_count: number;
     /**
      * alias
      */
-    antecedent?: string,
-}
+    antecedent?: string;
+};
 
 /**
  * Do a request to danbooru.donmai.us
@@ -110,10 +110,7 @@ type AutocompleteTag = {
  * @param {Params} [params={}] - Request params
  * @returns {Promise<object>} Parsed server response
  */
-async function danbooru<Result extends object> (
-    path: string,
-    params: Params = {},
-): Promise<Result> {
+async function danbooru<Result extends object>(path: string, params: Params = {}): Promise<Result> {
     const [dblogin, dbapikey] = storage.dbkey?.split(" ") ?? [];
     if (dblogin) {
         params.login = dblogin;
@@ -140,7 +137,7 @@ const Danbooru = {
      * @param type - type of completion, default `"tag_query"`
      * @returns array of matched tags
      */
-    autocompleteTag (tagName: string, type = "tag_query") {
+    autocompleteTag(tagName: string, type = "tag_query") {
         return danbooru<AutocompleteTag[]>("/autocomplete.json", {
             "search[query]": tagName,
             "search[type]": type,
@@ -153,7 +150,7 @@ const Danbooru = {
      * @param query - Search query
      * @returns Number of posts
      */
-    async postCount (tags: string) {
+    async postCount(tags: string) {
         const res = await danbooru<PostCount>("/counts/posts.json", { tags });
         return res.counts.posts;
     },
@@ -164,7 +161,7 @@ const Danbooru = {
      * @param limit - Max number of results per page
      * @returns Array of post infos
      */
-    findPosts (tags: string, page: number = 1, limit?: number) {
+    findPosts(tags: string, page: number = 1, limit?: number) {
         return danbooru<PostInfo[]>("/posts.json", { tags, page, limit });
     },
 };

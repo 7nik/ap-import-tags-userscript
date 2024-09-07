@@ -1,11 +1,15 @@
 /* eslint-disable no-await-in-loop */
 import { GM } from "$";
 
-export type Params = Record<string, string|number|boolean|null|undefined>;
+export type Params = Record<string, string | number | boolean | null | undefined>;
 
 type FetchFunc = (url: string, params: RequestInit) => Promise<Response>;
 
-export const sleep = (time: number) => new Promise((resolve) => { setTimeout(resolve, time); });
+export const sleep = (time: number) => {
+    const { promise, resolve } = Promise.withResolvers();
+    setTimeout(resolve, time);
+    return promise;
+};
 
 // allowed HTTP header name according to rfc2616
 // /^[\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x3D\x41-\x5A\x5E-\x7A\x7Cx7E]+:/
@@ -17,40 +21,44 @@ const HEADER_REGEXP = /^[\d!\u0023-\u0027*+.=A-Z\u005E-\u007A|-]+:/;
  * @param {RequestInit} params - Other params of the function
  * @returns {Promise<Response>} Response object of the same type as fetch's
  */
-export function gmFetch (url: string, params: RequestInit = {}): Promise<Response> {
-    return new Promise<Response>((res, rej) => {
-        GM.xmlHttpRequest({
-            url,
-            method: (params.method ?? "GET") as "GET" | "HEAD" | "POST",
-            data: params.body as string,
-            binary: !!params.body,
-            nocache: true, // do not cache responses, especially bad ones
-            responseType: "arraybuffer",
-            onload (resp) {
-                const headers: Record<string, string> = {};
-                let prevHeader = "";
-                for (const line of resp.responseHeaders.trim().split("\n")) {
-                    if (HEADER_REGEXP.test(line)) {
-                        const [name, value] = line.split(":");
-                        headers[name] = value.trim();
-                        prevHeader = name;
+export function gmFetch(url: string, params: RequestInit = {}): Promise<Response> {
+    const { promise, resolve, reject } = Promise.withResolvers<Response>();
+    GM.xmlHttpRequest({
+        url,
+        method: params.method ?? "GET",
+        data: params.body as string,
+        binary: !!params.body,
+        nocache: true, // do not cache responses, especially bad ones
+        responseType: "arraybuffer",
+        onload(resp) {
+            const headers: Record<string, string> = {};
+            let prevHeader = "";
+            for (const line of resp.responseHeaders.trim().split("\n")) {
+                if (HEADER_REGEXP.test(line)) {
+                    const [name, value] = line.split(":");
+                    headers[name] = value.trim();
+                    prevHeader = name;
                     // otherwise it's multiline header
-                    } else {
-                        headers[prevHeader] += line;
-                    }
+                } else {
+                    headers[prevHeader] += line;
                 }
-                res(new Response(resp.response, {
+            }
+            resolve(
+                new Response(resp.response, {
                     status: resp.status,
                     statusText: resp.statusText,
                     headers,
-                }));
-            },
-            onabort () { rej(new Error("aborted")); },
-            onerror (resp) {
-                rej(new Error(resp.error ?? resp.statusText));
-            },
-        });
+                }),
+            );
+        },
+        onabort() {
+            reject(new Error("aborted"));
+        },
+        onerror(resp) {
+            reject(new Error(resp.error ?? resp.statusText));
+        },
     });
+    return promise;
 }
 
 /**
@@ -60,40 +68,43 @@ export function gmFetch (url: string, params: RequestInit = {}): Promise<Respons
  * @param {RequestInit} [params={}] - Get-params of the request
  * @returns {Promise<Response>} Raw server response
  */
-export async function query (
+export async function query(
     fetch: FetchFunc,
     url: string,
     params: RequestInit = {},
 ): Promise<Response> {
-    params.credentials ??= new URL(url).host.endsWith(window.location.host) ? "include" : undefined;
-    for (const nth of ["Second", "Third", "Fourth", "Fifth"]) {
+    if (new URL(url).host.endsWith(window.location.host)) {
+        params.credentials ??= "include";
+    }
+    const TRIES = 10;
+    for (let i = 1; i <= TRIES; i++) {
         try {
             const resp = await fetch(url, params);
-            // the 5xx response may be done by Cloudflare which sends HTML and
-            // attempt to parse it as JSON will throw error
             if (resp.status >= 500) {
-                console.warn(url, `\nServer responded with ${resp.status} code. ${nth} attempt`);
+                if (i === TRIES) {
+                    console.warn(`Returning response with ${resp.status} code!!!`);
+                    return resp;
+                }
+                console.warn(`Server responded with ${resp.status} code. ${i + 1}th attempt`, url);
                 await sleep(5000);
                 continue;
-            } else {
-                return resp;
             }
+            return resp;
         } catch (ex) {
-            console.warn(ex, url, `\nFetch error. ${nth} attempt`);
+            console.warn(ex, `\nFetch error. ${i + 1}th attempt`, url);
             await sleep(5000);
         }
     }
-    // do not mute exception at the last attempt
     return fetch(url, params);
 }
 
-async function json (resp: Response): Promise<any> {
+async function json(resp: Response): Promise<any> {
     if (resp.headers.get("content-type")?.includes("/json")) {
         try {
             return resp.clone().json();
         } catch (ex) {
             console.error(ex, resp.statusText, await resp.text());
-            throw (ex);
+            throw ex;
         }
     }
     console.warn(await resp.text());
@@ -107,7 +118,7 @@ async function json (resp: Response): Promise<any> {
  * @param {boolean} useGMXHR - use GM.XHR or fetch
  * @returns Promise<any> - JSON response
  */
-export async function get (
+export async function get(
     url: string,
     params: Params = {},
     useGMXHR: boolean = false,
@@ -128,7 +139,7 @@ export async function get (
  * @param {boolean} useGMXHR - use GM.XHR or fetch
  * @returns Promise<any> - JSON response
  */
-export async function post (
+export async function post(
     url: string,
     params: Params = {},
     useGMXHR: boolean = false,
@@ -155,7 +166,7 @@ export async function post (
  * @param {boolean} useGMXHR - use GM.XHR or fetch
  * @returns Promise<any> - JSON response
  */
-export async function del (url: string, useGMXHR: boolean = false): Promise<any> {
+export async function del(url: string, useGMXHR: boolean = false): Promise<any> {
     const func = useGMXHR ? gmFetch : fetch;
     return json(await query(func, url, { method: "DELETE" }));
 }

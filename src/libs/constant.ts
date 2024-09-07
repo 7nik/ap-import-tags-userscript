@@ -8,6 +8,5 @@ export const POST_STATUS_TEXT = {
 /**
  * A transparent 1x1 image
  */
-export const IMAGE_PLACEHOLDER = (
-    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-);
+export const IMAGE_PLACEHOLDER =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";

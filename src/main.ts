@@ -15,15 +15,17 @@ if (skScript) {
     start();
 }
 
-async function start () {
-    await new Promise((res) => { setTimeout(res, 10); });
+async function start() {
+    await new Promise((res) => {
+        setTimeout(res, 10);
+    });
     addStartAppButton();
     if (window.location.hash || window.location.href.endsWith("#")) {
         startApp();
     }
 }
 
-function addStartAppButton () {
+function addStartAppButton() {
     const ul = document.createElement("ul");
     ul.style.marginTop = "20px";
 
@@ -42,7 +44,7 @@ function addStartAppButton () {
     document.querySelector(".mobile_menu")?.append(ul);
 }
 
-function startApp () {
+function startApp() {
     const content = document.querySelector(".content");
     if (!content) {
         console.error("No element to mount the App");
@@ -66,13 +68,17 @@ function startApp () {
 
 // https://github.com/sveltejs/kit/issues/2588 in SK below v1.181
 // no hashchange event when only hash changes
-window.addEventListener("click", (ev) => {
-    const a = (ev.target as HTMLElement).closest("a[href='/']");
-    if (a && stop) {
-        stop();
-        stop = null;
-    }
-}, { capture: true });
+window.addEventListener(
+    "click",
+    (ev) => {
+        const a = (ev.target as HTMLElement).closest("a[href='/']");
+        if (a && stop) {
+            stop();
+            stop = null;
+        }
+    },
+    { capture: true },
+);
 
 window.addEventListener("hashchange", () => {
     const hasHash = window.location.hash || window.location.href.endsWith("#");
