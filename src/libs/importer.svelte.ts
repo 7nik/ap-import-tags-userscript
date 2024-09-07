@@ -7,38 +7,39 @@ import storage from "./storage.svelte";
 import { localTime, percent } from "./utils.svelte";
 
 type State = {
-    progress: number,
-    paused: boolean,
-    finished: boolean,
-    requiredAttempts: number,
-    availableAttempts: number,
+    progress: number;
+    paused: boolean;
+    finished: boolean;
+    requiredAttempts: number;
+    availableAttempts: number;
     error: string | null;
     status: string;
     eta: number; // timestamp
 };
 type Result = {
-    source: SimplePost|null,
-    result: SimpleAPPost,
-    sim: number,
+    source: SimplePost | null;
+    result: SimpleAPPost;
+    sim: number;
 };
 type SavedResult = {
-    providerName: string,
-    query: string,
-    date: number,
-    results: Result[],
-}
+    providerName: string;
+    query: string;
+    date: number;
+    results: Result[];
+};
 export type { State, Result, SavedResult };
 
 /**
  * Class to take pics on an image board and find the most similar on Anime-pictures using SauceNAO
  */
 export default class Importer<
-    Post extends { id?:any },
-    Provider extends DataProvider<Post, SimplePost>
+    Post extends { id?: any },
+    Provider extends DataProvider<Post, SimplePost>,
 > {
     #provider: Provider;
     #query: string;
     #iterator: AsyncIterableIterator<FoundPost<Post>>;
+    #foundPost?: IteratorResult<FoundPost<Post>, FoundPost<Post>>;
     #doPause = false;
     #started = 0;
     #paused = 0;
@@ -55,7 +56,7 @@ export default class Importer<
 
     readonly results: Result[] = [];
 
-    constructor (provider: Provider, query: string) {
+    constructor(provider: Provider, query: string) {
         this.#provider = provider;
         this.#query = query;
         this.#iterator = provider.findPosts(query);
@@ -63,8 +64,9 @@ export default class Importer<
 
     /**
      * Find one next picture
+     * @param [repeat] - re-iterate the current post
      */
-    private async iterate (): Promise<void> {
+    private async iterate(repeat = false): Promise<void> {
         if (this.state.finished || this.state.paused) return;
 
         if (this.#doPause) {
@@ -74,9 +76,12 @@ export default class Importer<
             return;
         }
 
-        const search = await this.#iterator.next();
+        if (!this.#foundPost || !repeat) {
+            this.#foundPost = await this.#iterator.next();
+        }
 
-        if (search.done) { // it was the last page so save the results
+        if (this.#foundPost.done) {
+            // it was the last page so save the results
             this.results.sort((a, b) => +b.sim - +a.sim);
             const res: SavedResult = {
                 query: decodeURIComponent(this.#query),
@@ -90,12 +95,12 @@ export default class Importer<
             return;
         }
 
-        const { post, progress } = search.value;
+        const { post, progress } = this.#foundPost.value;
         this.state.progress = progress * 100;
         this.state.eta = (Date.now() - this.#started) / progress + this.#started;
-        this.state.status = (
-            `${percent(progress)}%: post №${post.id}, ETA: ${localTime(this.state.eta)}`
-        );
+        this.state.status = `${percent(progress)}%: post №${post.id}, ETA: ${localTime(
+            this.state.eta,
+        )}`;
         try {
             const source = this.#provider.simplifyPost(post);
             const simRes = await SN.searchOnAnimePictures(this.#provider.getImage(source, "150"));
@@ -130,17 +135,18 @@ export default class Importer<
     /**
      * Initiate pausing of the importer
      */
-    pause (): void {
+    pause(): void {
         this.#doPause = true;
     }
 
     /**
      * Continue the importer's work
+     * @param {boolean} repeat Whether re-try the current item or continue from the next one
      * @param {boolean} [force=false] If true, continue work even if there are
      * no enough available search attempts
      * @returns {Promise<boolean>} whether the work was resumed
      */
-    async resume (force: boolean = false): Promise<boolean> {
+    async resume(repeat: boolean, force: boolean = false): Promise<boolean> {
         if (this.state.finished) return false;
 
         if (!force) {
@@ -152,8 +158,8 @@ export default class Importer<
                 this.state.error = ex.message;
                 throw ex;
             }
-            const remainingRequiredAttempts = this.state.requiredAttempts - this.results.length;
-            if (this.state.availableAttempts / remainingRequiredAttempts < 0.99) {
+            const requiredAttempts = this.state.requiredAttempts - this.results.length;
+            if (this.state.availableAttempts / requiredAttempts < 0.99) {
                 return false;
             }
         }
@@ -161,13 +167,13 @@ export default class Importer<
         // just was about to pause
         if (this.#doPause) {
             this.#doPause = false;
-        // was completely paused
+            // was completely paused
         } else if (this.state.paused) {
             this.state.paused = false;
             this.state.error = null;
             // subtract the time spent before the pause
             this.#started = Date.now() - (this.#started ? this.#paused - this.#started : 0);
-            this.iterate();
+            this.iterate(repeat);
         }
         return true;
     }
