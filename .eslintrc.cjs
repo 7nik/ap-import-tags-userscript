@@ -166,10 +166,6 @@ module.exports = {
             { blankLine: "always", prev: "class", next: "*" },
             { blankLine: "always", prev: "directive", next: "*" },
         ],
-        "space-before-function-paren": [
-            "error",
-            "always",
-        ],
         strict: [
             "error",
             "global",
