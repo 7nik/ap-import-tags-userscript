@@ -40,6 +40,7 @@
         return () => src;
     }
 
+    // svelte-ignore state_referenced_locally
     const apImg = $derived.by(getImage(APPostProvider, result));
     const dbImg = $derived.by(getImage(dataProvider, post.source));
     const lang = siteLang();
