@@ -31,6 +31,7 @@ export default function search(provider: DataProvider<any, any>, query: string) 
 
         storage[`res_${result.date}`] = result;
         state.link = `/res/${result.date}/0`;
+        state.progress = 1;
     })();
 
     return state;

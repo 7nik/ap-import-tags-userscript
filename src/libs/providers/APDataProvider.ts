@@ -21,10 +21,22 @@ const TAG_CATEGORY: Record<APCategory, TagCategory> = {
 };
 
 function convertQuery(query: string) {
-    return query
-        .split(",")
-        .map((q) => q.trim())
-        .join("&&");
+    const search: string[] = [];
+    const exclude: string[] = [];
+
+    for (let tag of query.split(",")) {
+        tag = tag.trim();
+        if (tag.startsWith("-")) {
+            exclude.push(tag.slice(1));
+        } else {
+            search.push(tag);
+        }
+    }
+
+    return {
+        searchTags: search.join("&&"),
+        excludeTags: exclude.join("||"),
+    };
 }
 
 const dataProvider: APDataProvider = {
@@ -33,7 +45,7 @@ const dataProvider: APDataProvider = {
     helpInfo: `Prefix tags with "-" exclude them from search results`,
     tagPrefixes: ["-"],
     async postCount(query) {
-        const res = await AP.searchPosts(0, { searchTags: convertQuery(query) });
+        const res = await AP.searchPosts(0, convertQuery(query));
         return res.totalPosts;
     },
     async *findPosts(query) {
@@ -44,16 +56,11 @@ const dataProvider: APDataProvider = {
 
         for (let page = 0; page < totalPages; page += 1) {
             // eslint-disable-next-line no-await-in-loop
-            ({ posts, totalPages, totalPosts } = await AP.searchPosts(page, {
-                searchTags: convertQuery(query),
-            }));
+            ({ posts, totalPages, totalPosts } = await AP.searchPosts(page, convertQuery(query)));
             for (const post of posts) {
                 found += 1;
                 yield { post, progress: found / totalPosts };
             }
-        }
-        if (found < totalPosts) {
-            yield { post: {} as any, progress: 1 };
         }
     },
     getImage({ md5, ext }, size) {
