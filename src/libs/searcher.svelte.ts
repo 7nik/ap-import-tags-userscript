@@ -15,6 +15,7 @@ export default function search(provider: DataProvider<any, any>, query: string) 
             date: Date.now(),
             results: [],
         };
+        state.link = `/res/${result.date}/0`;
 
         const iterator = provider.findPosts(query);
         let match = await iterator.next();
@@ -30,7 +31,6 @@ export default function search(provider: DataProvider<any, any>, query: string) 
         }
 
         storage[`res_${result.date}`] = result;
-        state.link = `/res/${result.date}/0`;
         state.progress = 1;
     })();
 
