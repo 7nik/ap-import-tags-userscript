@@ -1,4 +1,4 @@
-import { del, get, post } from "./ajax";
+import { del, get, post, sleep } from "./ajax";
 
 type FullUrl = `https://${string}` | `//${string}`;
 
@@ -219,7 +219,7 @@ type ProfileResult = {
 
 const HOST = "https://api.anime-pictures.net";
 
-const AnimePictures = {
+const AnimePicturesDirect = {
     /**
      * Add tags to a post
      * @param tagNames - list of tags separated by `||`
@@ -400,6 +400,32 @@ const AnimePictures = {
         return get(`${HOST}/api/v3/profile`);
     },
 };
+
+/**
+ * Ensure we do not hit the request limit
+ */
+const LIMIT = 100; // left 20 req/min for other things
+let left = LIMIT;
+let nextTime = Promise.resolve();
+const AnimePictures = new Proxy(AnimePicturesDirect, {
+    get(_, prop) {
+        const fn = AnimePicturesDirect[prop as keyof typeof AnimePicturesDirect];
+        return async (...args: any[]) => {
+            const ratio = left / LIMIT;
+            // do not throttle if usage is low
+            if (ratio < 0.5) {
+                await nextTime;
+                // in range [0..0.5], the closer `ratio` to 0, the closer the delay to 1 minute
+                nextTime = sleep(240_000 * (ratio - 0.5) ** 2);
+            }
+            left -= 1;
+            sleep(60_000).then(() => {
+                left += 1;
+            });
+            return Reflect.apply(fn, AnimePictures, args);
+        };
+    },
+});
 
 export default AnimePictures;
 export type { PostInfo, ShortPostInfo, FullTag, AutocompleteTag };
