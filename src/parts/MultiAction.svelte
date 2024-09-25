@@ -51,7 +51,7 @@
         }
         if (ev.key === "Escape") {
             mode = "off";
-        } else if (/\d/.test(ev.key)) {
+        } else if (/^\d$/.test(ev.key)) {
             mode = ev.key;
         }
     }

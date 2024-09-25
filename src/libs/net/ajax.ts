@@ -6,7 +6,7 @@ export type Params = Record<string, string | number | boolean | null | undefined
 type FetchFunc = (url: string, params: RequestInit) => Promise<Response>;
 
 export const sleep = (time: number) => {
-    const { promise, resolve } = Promise.withResolvers();
+    const { promise, resolve } = Promise.withResolvers<void>();
     setTimeout(resolve, time);
     return promise;
 };
@@ -77,7 +77,7 @@ export async function query(
         params.credentials ??= "include";
     }
     const TRIES = 10;
-    for (let i = 1; i <= TRIES; i++) {
+    for (let i = 1; i < TRIES; i++) {
         try {
             const resp = await fetch(url, params);
             if (resp.status >= 500) {
