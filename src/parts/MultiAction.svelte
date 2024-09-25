@@ -66,7 +66,10 @@ Click a post to apply the selected action to it.
 Use numerical and Esc keys to switch between actions.
 "
 >
-    <select bind:value={mode}>
+    <select
+        bind:value={mode}
+        class="ma-select"
+    >
         <option label="disabled">off</option>
         <option label="action 1">1</option>
         <option label="action 2">2</option>
@@ -96,5 +99,10 @@ Use numerical and Esc keys to switch between actions.
     select,
     .break {
         margin-top: 10px;
+    }
+    :global(#sidebar):has(.ma-select) {
+        align-self: flex-start;
+        position: sticky;
+        top: 0;
     }
 </style>
