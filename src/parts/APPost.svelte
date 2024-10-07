@@ -11,10 +11,11 @@
         multiAction,
     }: {
         post: SimpleAPPost;
-        multiAction: Pick<MultiAction, "isEnabled" | "applyTo">;
+        multiAction: ReturnType<typeof MultiAction>;
     } = $props();
 
-    const imgSrc = $derived(APPostProvider.getImage(post, storage.postSize ?? "300"));
+    const imgThumb = $derived(APPostProvider.getImage(post, storage.postSize ?? "300"));
+    const imgFull = $derived(APPostProvider.getImage(post, "orig"));
     const lang = siteLang();
 
     let pending = $state(false);
@@ -44,14 +45,16 @@
         rel="opener"
         onclick={handleClick}
     >
-        {#if imgSrc.endsWith(".mp4")}
+        {#if imgThumb.endsWith(".mp4")}
             <video
-                src={imgSrc}
+                src={imgThumb}
                 muted
+                autoplay
+                loop
             ></video>
         {:else}
             <!-- svelte-ignore a11y_missing_attribute -->
-            <img src={imgSrc} />
+            <img src={imgThumb} />
         {/if}
     </a>
     <div
@@ -62,7 +65,7 @@
         color: {contrastColor(post)};"
     >
         <a
-            href="/pictures/view_posts/0?res_x={post.width}&res_y={post.height}&lang={lang}"
+            href={imgFull}
             title="Anime pictures {post.width}x{post.height}"
             target="_blank"
             style="background-color: {eroticColor(post)};"

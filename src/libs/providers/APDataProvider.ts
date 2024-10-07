@@ -2,7 +2,10 @@ import AP, { type ShortPostInfo, TagCategory as APCategory } from "../net/AnimeP
 import { type DataProvider, Auth, type SimplePost, TagCategory } from "./DataProvider";
 
 type SimpleAPPost = SimplePost &
-    Pick<ShortPostInfo, "md5" | "height" | "width" | "color" | "status" | "erotics" | "tags_count">;
+    Pick<
+        ShortPostInfo,
+        "md5" | "height" | "width" | "color" | "status" | "erotics" | "tags_count"
+    > & { alpha: boolean };
 
 type APDataProvider = Omit<DataProvider<ShortPostInfo, SimpleAPPost>, "simplifyPost"> & {
     simplifyPost(post: ShortPostInfo): SimpleAPPost;
@@ -63,16 +66,26 @@ const dataProvider: APDataProvider = {
             }
         }
     },
-    getImage({ md5, ext }, size) {
+    getImage({ md5, ext, alpha }, size) {
+        if (size === "orig") {
+            return `https://oimages.anime-pictures.net/${md5.slice(0, 3)}/${md5}.${ext}`;
+        }
         const host = `https://opreviews.anime-pictures.net/`;
         const name = `${md5.slice(0, 3)}/${md5}_`;
+        // animated images
+        if (ext === "gif" && (size === "500" || size === "800")) {
+            // there is no lp version
+            return `${host}/${name}bp.mp4`;
+        }
         const s = {
             150: "sp",
             300: "cp",
             500: "bp",
+            800: "lp",
         }[size];
+        const ext1 = ext === "gif" ? ".gif" : alpha ? ".png" : ".jpg";
         const ext2 = ext === "gif" ? ".webp" : ".avif";
-        return [host, name, s, ".", ext, ext2].join("");
+        return [host, name, s, ext1, ext2].join("");
     },
     getLink(post) {
         return `https://anime-pictures.net/posts/${post.id}`;
@@ -87,7 +100,8 @@ const dataProvider: APDataProvider = {
             status: post.status,
             tags_count: post.tags_count,
             width: post.width,
-            ext: post.ext === "gif" ? "gif" : post.have_alpha ? "png" : "jpg",
+            ext: post.ext.slice(1),
+            alpha: post.have_alpha,
         };
     },
     async autocompleteTag(query) {

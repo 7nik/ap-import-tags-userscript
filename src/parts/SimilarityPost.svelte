@@ -1,12 +1,17 @@
 <script lang="ts">
     import type MultiAction from "./MultiAction.svelte";
     import type { Result } from "../libs/matcher.svelte";
-    import type { DataProvider, SimplePost } from "../libs/providers";
-    import { GM } from "$";
-    import { IMAGE_PLACEHOLDER, POST_STATUS_TEXT } from "../libs/constant";
+    import type { DataProvider } from "../libs/providers";
+    import { POST_STATUS_TEXT } from "../libs/constant";
     import APPostProvider from "../libs/providers/APDataProvider";
     import storage from "../libs/storage.svelte";
-    import { contrastColor, eroticColor, isPostPublished, siteLang } from "../libs/utils.svelte";
+    import {
+        contrastColor,
+        eroticColor,
+        getCorsImage,
+        isPostPublished,
+        siteLang,
+    } from "../libs/utils.svelte";
 
     const {
         post,
@@ -14,35 +19,16 @@
         dataProvider,
     }: {
         post: Result;
-        multiAction: Pick<MultiAction, "isEnabled" | "applyTo">;
+        multiAction: ReturnType<typeof MultiAction>;
         dataProvider: DataProvider<any, any>;
     } = $props();
     const result = $derived(post.result);
 
-    function getImage(provider: DataProvider<any, any>, data: SimplePost | null) {
-        const origSrc = $derived(data ? provider.getImage(data, storage.postSize ?? "300") : "");
-        let src = $state("");
-        $effect(() => {
-            if (origSrc.startsWith("https://")) {
-                src = origSrc;
-                return;
-            }
-            src = IMAGE_PLACEHOLDER;
-            GM.xmlHttpRequest({
-                url: origSrc,
-                responseType: "blob",
-                onload(resp) {
-                    src = window.URL.createObjectURL(resp.response);
-                },
-            });
-        });
+    const getImage = dataProvider.sourceName === "Minitokyo" ? getCorsImage : <T,>(x: T): T => x;
 
-        return () => src;
-    }
-
-    // svelte-ignore state_referenced_locally
-    const apImg = $derived.by(getImage(APPostProvider, result));
-    const dbImg = $derived.by(getImage(dataProvider, post.source));
+    const size = $derived(storage.postSize ?? "300");
+    const apImg = $derived(APPostProvider.getImage(result, size));
+    const dbImg = $derived.by(getImage(() => dataProvider.getImage(post.source, size)));
     const lang = siteLang();
 
     let pending = $state(false);
@@ -88,6 +74,7 @@
         class="db_link"
         href={post.source ? dataProvider.getLink(post.source) : ""}
         title="{dataProvider.sourceName} post"
+        aria-label="{dataProvider.sourceName} post"
         target="_blank"
         onclick={handleClick}
     >
@@ -96,18 +83,23 @@
         class="ap_link"
         href="/pictures/view_post/{result.id}?lang={lang}"
         title="Anime pictures post"
+        aria-label="Anime pictures post"
         target="_blank"
         rel="opener"
         onclick={handleClick}
     >
     </a>
     <div class="db_img">
-        <!-- svelte-ignore a11y_missing_attribute -->
-        <img src={dbImg} />
+        <img
+            src={dbImg}
+            alt="{dataProvider.sourceName} thumb"
+        />
     </div>
     <div class="ap_img">
-        <!-- svelte-ignore a11y_missing_attribute -->
-        <img src={apImg} />
+        <img
+            src={apImg}
+            alt="Anime pictures thumb"
+        />
     </div>
 </span>
 

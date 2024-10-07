@@ -68,7 +68,13 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
         }
     },
     getImage({ id }, size) {
-        const dir0 = size === "150" ? "thumbs" : "view"; // 180px or 500px
+        const dir0 = {
+            150: "thumbs", // 150px
+            300: "view", // 500px
+            500: "view", // 500px
+            800: "view", // 500px
+            orig: "downloads",
+        }[size];
         const dir1 = (id % 50).toString().padStart(2, "0");
         const dir2 = (((id - +dir1) % 2500) / 50).toString().padStart(2, "0");
         return `http://static2.minitokyo.net/${dir0}/${dir1}/${dir2}/${id}.jpg`;
@@ -81,6 +87,8 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
             id: post.id ?? 1,
             md5: "",
             ext: "",
+            width: post.width,
+            height: post.height,
         };
     },
     async autocompleteTag(query) {

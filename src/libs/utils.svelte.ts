@@ -1,4 +1,6 @@
 import type { SimpleAPPost } from "./providers/APDataProvider";
+import { GM } from "$";
+import { IMAGE_PLACEHOLDER } from "./constant";
 import storage from "./storage.svelte";
 
 /**
@@ -48,4 +50,19 @@ export function percent(n: number) {
  */
 export function localTime(timestamp: number) {
     return new Date(timestamp).toLocaleTimeString();
+}
+
+export function getCorsImage(src: string | (() => string)) {
+    let blob = $state(IMAGE_PLACEHOLDER);
+    $effect(() => {
+        GM.xmlHttpRequest({
+            url: typeof src === "string" ? src : src(),
+            responseType: "blob",
+            onload(resp) {
+                blob = window.URL.createObjectURL(resp.response);
+            },
+        });
+    });
+
+    return () => blob;
 }

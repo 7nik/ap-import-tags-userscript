@@ -17,6 +17,8 @@ export interface SimplePost {
      * file extension without the dot
      */
     ext: string;
+    width: number;
+    height: number;
 }
 
 export enum TagCategory {
@@ -35,6 +37,8 @@ export interface MatchedTag {
     category: TagCategory;
 }
 
+export type PostSize = "150" | "300" | "500" | "800" | "orig";
+
 export type DataProvider<RawPost, SavedPost extends SimplePost> = {
     readonly sourceName: string;
     readonly authType: Auth;
@@ -52,7 +56,7 @@ export type DataProvider<RawPost, SavedPost extends SimplePost> = {
      * @param post
      * @param size
      */
-    getImage(post: SavedPost, size: "150" | "300" | "500"): string;
+    getImage(post: SavedPost, size: PostSize): string;
     getLink(post: SavedPost): string;
     simplifyPost(post: RawPost): SavedPost;
     autocompleteTag(query: string): Promise<MatchedTag[]>;

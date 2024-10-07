@@ -1,4 +1,5 @@
 import type { SavedResult } from "./matcher.svelte";
+import type { PostSize } from "./providers";
 import { tick, untrack } from "svelte";
 
 const PREFIX = "AP_tag_importer_";
@@ -9,7 +10,7 @@ type LocalData = {
     snapikey: string;
     // settings
     pageSize: number;
-    postSize: "150" | "300" | "500";
+    postSize: PostSize;
     showSource: boolean;
     isModerator: boolean;
     [k: `ma_${string}`]: { addTags: string; removeTags: string };

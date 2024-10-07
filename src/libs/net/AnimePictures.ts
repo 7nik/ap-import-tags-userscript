@@ -33,7 +33,7 @@ type ShortPostInfo = {
     download_count: number;
     erotics: 0 | 1 | 2 | 3; // no erotic, light erotic, [medium] erotic, hard erotic
     color: [number, number, number]; // average color, RGB format
-    ext: "jpg" | "jpeg" | "png" | "gif";
+    ext: ".jpg" | ".jpeg" | ".png" | ".gif";
     status: 0 | -2 | 1 | 2; // new|pre|published|banned
     status_type: number;
     redirect_id: number | null;

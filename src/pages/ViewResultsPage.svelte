@@ -4,9 +4,10 @@
     import { mount, onDestroy, unmount } from "svelte";
     import dataProviders from "../libs/providers";
     import storage from "../libs/storage.svelte";
+    import APPost from "../parts/APPost.svelte";
+    import BasePost from "../parts/BasePost.svelte";
     import MultiAction from "../parts/MultiAction.svelte";
     import PageNavigator from "../parts/PageNavigator.svelte";
-    import Post from "../parts/Post.svelte";
     import SimilarityPost from "../parts/SimilarityPost.svelte";
 
     const { params }: { params: { name: string; page: number } } = $props();
@@ -20,7 +21,7 @@
     const pageCount = $derived(Math.ceil(search.results.length / pageSize));
     const posts = $derived(search.results.slice(currPage * pageSize, (currPage + 1) * pageSize));
 
-    const canShowSource = search.results.every((r) => r.source);
+    const hasSource = search.results.every((r) => r.source);
 
     const multiAction = mount(MultiAction, {
         target: document.getElementById("sidebar") ?? document.body,
@@ -71,6 +72,7 @@
         <option label="small">150</option>
         <option label="medium">300</option>
         <option label="big">500</option>
+        <option label="large">800</option>
     </select>
     <div class="header">
         Search results: {search.results.length} pictures
@@ -83,19 +85,24 @@
 />
 <div
     class="posts"
-    style:--post-size="{storage.postSize}px"
+    style:--post-size="{storage.postSize === "800" ? 720 : storage.postSize}px"
 >
     {#each posts as post (post.result.id)}
-        {#if storage.showSource && canShowSource}
+        {#if hasSource && storage.showSource}
             <SimilarityPost
                 {post}
                 {multiAction}
                 {dataProvider}
             />
-        {:else}
-            <Post
+        {:else if hasSource || search.providerName === "AnimePictures"}
+            <APPost
                 post={post.result}
                 {multiAction}
+            />
+        {:else}
+            <BasePost
+                post={post.result}
+                {dataProvider}
             />
         {/if}
     {/each}
@@ -104,6 +111,7 @@
     {baseUrl}
     {currPage}
     {pageCount}
+    showFastNavigator
 />
 
 <style>
