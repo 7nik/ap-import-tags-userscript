@@ -1,12 +1,16 @@
 <script lang="ts">
+    import { replace } from "svelte-spa-router";
+
     const {
         pageCount,
         currPage,
         baseUrl = "",
+        showFastNavigator = false,
     }: {
         pageCount: number;
         currPage: number;
         baseUrl?: string;
+        showFastNavigator?: boolean;
     } = $props();
 
     const pages = $derived.by(() => {
@@ -24,6 +28,11 @@
             pages.push(i);
         }
         return pages;
+    });
+
+    let currPage2 = $state(currPage);
+    $effect(() => {
+        currPage2 = currPage;
     });
 </script>
 
@@ -44,6 +53,25 @@
         <a href="{baseUrl}{currPage + 1}">&gt;</a>
     {/if}
 </p>
+{#if showFastNavigator}
+    <form
+        onsubmit={(ev) => {
+            ev.preventDefault();
+            replace(baseUrl + currPage2);
+        }}
+    >
+        Page:
+        <input
+            type="number"
+            size="3"
+            min="0"
+            max={pageCount - 1}
+            bind:value={currPage2}
+        />
+        page of
+        {pageCount - 1}
+    </form>
+{/if}
 
 <style>
     .numeric_pages {
@@ -71,5 +99,9 @@
     }
     a:hover {
         background: var(--numeric-pages-hover-color);
+    }
+    form {
+        text-align: center;
+        margin-bottom: 1rem;
     }
 </style>
