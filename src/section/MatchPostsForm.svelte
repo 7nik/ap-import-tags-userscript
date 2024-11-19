@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { CircleHelp } from "lucide-svelte";
     import { push } from "svelte-spa-router";
     import dataProviders from "../libs/providers";
     import localStorage from "../libs/storage.svelte";
@@ -34,7 +35,9 @@
             <span
                 title={dataProvider.helpInfo}
                 class="question_icon"
-            ></span>
+            >
+                <CircleHelp size="16" />
+            </span>
         </span>
         <span>Danbooru key:</span>
         <input
@@ -73,11 +76,6 @@
         grid-template-columns: auto min-content;
     }
     .question_icon {
-        background-image: url(/assets/styles/icons/help.svg);
-        background-size: contain;
-        width: 16px;
-        height: 16px;
-        float: right;
         margin: 3px 0 0 10px;
     }
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { SavedResult } from "../libs/matcher.svelte";
+    import { Trash2 } from "lucide-svelte";
     import localStorage from "../libs/storage.svelte";
     import Block from "../parts/Block.svelte";
 
@@ -20,12 +21,11 @@
     {#each searches as search}
         <div>
             <a href="#/res/{search.date}/0">{search.providerName}: {search.query}</a>
-            <!-- eslint-disable-next-line max-len -->
-            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-            <span
-                class="icon_delete"
+            <Trash2
+                size="18"
+                cursor="pointer"
                 onclick={() => deleteResult(search)}
-            ></span>
+            />
             <br />
             {search.results.length}
             {search.results[0]?.source ? "matched" : "found"}
@@ -48,14 +48,5 @@
     div:last-child {
         border-bottom: none;
         padding-bottom: 0;
-    }
-    .icon_delete {
-        display: inline-block;
-        width: 18px;
-        height: 18px;
-        background-image: url(/assets/styles/icons/delete.svg);
-        background-size: contain;
-        cursor: pointer;
-        margin-bottom: -2px;
     }
 </style>
