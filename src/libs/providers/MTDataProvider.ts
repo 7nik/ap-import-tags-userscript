@@ -85,8 +85,6 @@ const dataProvider: DataProvider<PostInfo, SimplePost> = {
     simplifyPost(post) {
         return {
             id: post.id ?? 1,
-            md5: "",
-            ext: "",
             width: post.width,
             height: post.height,
         };

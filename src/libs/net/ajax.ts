@@ -133,6 +133,36 @@ export async function get(
 }
 
 /**
+ * Make a GET query of raw text
+ * @param {string} url - Full URL of the request
+ * @param {Params} params - Query params to be added to the URL
+ * @param {boolean} useGMXHR - use GM.XHR or fetch
+ * @returns raw text response
+ */
+export async function getText(url: string, params: Params = {}, useGMXHR: boolean = false) {
+    const link = new URL(url);
+    for (const [key, value] of Object.entries(params)) {
+        if (value == null) continue;
+        link.searchParams.append(key, value.toString());
+    }
+    const func = useGMXHR ? gmFetch : fetch;
+    const resp = await query(func, link.toString(), { method: "GET" });
+    return resp.text();
+}
+
+/**
+ * Make a GET query for an HTML
+ * @param {string} url - Full URL of the request
+ * @param {Params} params - Query params to be added to the URL
+ * @param {boolean} useGMXHR - use GM.XHR or fetch
+ * @returns parsed DOM
+ */
+export async function getHtml(url: string, params: Params = {}, useGMXHR: boolean = false) {
+    const text = await getText(url, params, useGMXHR);
+    return new DOMParser().parseFromString(text, "text/html");
+}
+
+/**
  * Send a POST query
  * @param {string} url - Full URL of the request
  * @param {Params} params - Query params to be send

@@ -13,7 +13,12 @@ export default defineConfig({
                 namespace: "7nik",
                 description: "Allow to match images from other sites against AP",
                 match: ["https://anime-pictures.net/*"],
-                connect: ["minitokyo.net", "saucenao.com", "static2.minitokyo.net"],
+                connect: [
+                    "deviantart.com",
+                    "minitokyo.net",
+                    "saucenao.com",
+                    "static2.minitokyo.net",
+                ],
             },
         }),
     ],

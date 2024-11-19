@@ -12,11 +12,6 @@ export interface FoundPost<Post> {
 
 export interface SimplePost {
     id: number;
-    md5: string;
-    /**
-     * file extension without the dot
-     */
-    ext: string;
     width: number;
     height: number;
 }

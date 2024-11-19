@@ -1,31 +1,4 @@
-import { type Params, gmFetch, query as netQuery } from "./ajax";
-
-/**
- * Make a GET query of raw text
- * @param {string} url - Full URL of the request
- * @param {Params} params - Query params to be added to the URL
- * @returns raw text response
- */
-async function getStr(url: string, params: Params = {}) {
-    const link = new URL(url, "http://www.minitokyo.net/");
-    for (const [key, value] of Object.entries(params)) {
-        if (value == null) continue;
-        link.searchParams.append(key, value.toString());
-    }
-    const resp = await netQuery(gmFetch, link.toString(), { method: "GET" });
-    return resp.text();
-}
-
-/**
- * Make a GET query for an HTML
- * @param {string} url - Full URL of the request
- * @param {Params} params - Query params to be added to the URL
- * @returns parsed DOM
- */
-async function getHtml(url: string, params: Params = {}) {
-    const text = await getStr(url, params);
-    return new DOMParser().parseFromString(text, "text/html");
-}
+import { getHtml, getText } from "./ajax";
 
 export type MinitokyoCategory = "wallpaper" | "art" | "scan";
 
@@ -84,7 +57,15 @@ const Minitokyo = {
         };
     },
     async autocompleteTag(tagName: string) {
-        const text = await getStr("/suggest", { q: tagName, limit: 10, timestamp: Date.now() });
+        const text = await getText(
+            "http://www.minitokyo.net/suggest",
+            {
+                q: tagName,
+                limit: 10,
+                timestamp: Date.now(),
+            },
+            true,
+        );
         if (!text) return [];
         return text
             .trim()
@@ -99,9 +80,10 @@ const Minitokyo = {
     },
     async getCounts(query: string) {
         const parsed = Minitokyo.parseQuery(query);
+        const name = parsed.query.replaceAll(" ", "+");
         const dom = parsed.isUsername
-            ? await getHtml(`http://${parsed.query}.minitokyo.net/`)
-            : await getHtml(`/${parsed.query.replaceAll(" ", "+")}`);
+            ? await getHtml(`http://${name}.minitokyo.net/`, {}, true)
+            : await getHtml(`http://www.minitokyo.net/${name}`, {}, true);
         const numbers =
             dom
                 .getElementById("tabs")
@@ -124,7 +106,11 @@ const Minitokyo = {
         const index = ["", "wallpaper", "art", "scan"].indexOf(category);
         const tid = typeof query === "number" ? query : null;
         const domain = typeof query === "string" ? query : "browse";
-        const dom = await getHtml(`http://${domain}.minitokyo.net/gallery`, { tid, index, page });
+        const dom = await getHtml(
+            `http://${domain}.minitokyo.net/gallery`,
+            { tid, index, page },
+            true,
+        );
 
         return Array.from(
             dom.querySelectorAll(".wallpapers li:not(:empty), .scans li:not(:empty)"),
