@@ -2,48 +2,29 @@ import { mount, unmount } from "svelte";
 import App from "./App.svelte";
 
 let stop: (() => void) | null;
-// wait till SvelteKit start and end hydration
-const skScript = document.querySelector("script[data-sveltekit-fetched]");
-if (skScript) {
-    new MutationObserver((_, observer) => {
-        if (!document.contains(skScript)) {
-            observer.disconnect();
-            start();
-        }
-    }).observe(skScript.parentElement!, { childList: true });
-} else {
-    start();
-}
 
-async function start() {
-    await new Promise((res) => {
-        setTimeout(res, 10);
-    });
-    addStartAppButton();
-    if (window.location.hash || window.location.href.endsWith("#")) {
-        startApp();
+const btn = document.createElement("ul");
+btn.style.marginTop = "20px";
+
+const li = document.createElement("li");
+
+const a = document.createElement("a");
+// TODO change to a better name, plus prefix in localStore
+a.textContent = "Import tags";
+a.href = "#";
+a.addEventListener("click", () => {
+    (document.querySelector("nav > :first-child") as HTMLElement)?.click();
+    startApp();
+});
+
+li.append(a);
+btn.append(li);
+
+setInterval(() => {
+    if (!document.contains(btn)) {
+        document.querySelector(".mobile_menu")?.append(btn);
     }
-}
-
-function addStartAppButton() {
-    const ul = document.createElement("ul");
-    ul.style.marginTop = "20px";
-
-    const li = document.createElement("li");
-
-    const a = document.createElement("a");
-    // TODO change to a better name, plus prefix in localStore
-    a.textContent = "Import tags";
-    a.href = "#";
-    a.addEventListener("click", () => {
-        (document.querySelector("nav > :first-child") as HTMLElement)?.click();
-        startApp();
-    });
-
-    li.append(a);
-    ul.append(li);
-    document.querySelector(".mobile_menu")?.append(ul);
-}
+}, 300);
 
 function startApp() {
     const content = document.querySelector(".content");
@@ -72,8 +53,8 @@ function startApp() {
 window.addEventListener(
     "click",
     (ev) => {
-        const a = (ev.target as HTMLElement).closest("a[href='/']");
-        if (a && stop) {
+        const isRootLink = !!(ev.target as HTMLElement).closest("a[href='/']");
+        if (isRootLink && stop) {
             stop();
             stop = null;
         }
