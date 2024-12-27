@@ -35,7 +35,7 @@ const storageMethods = {
                 if (!subCount[name]) {
                     destroyer[name] = $effect.root(() => {
                         $effect(() => {
-                            storageMethods.set(name, cache[name]!);
+                            if (name in cache) storageMethods.set(name, cache[name]!);
                         });
                     });
                 }

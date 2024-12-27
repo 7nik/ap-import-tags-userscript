@@ -5,7 +5,7 @@ type SimpleAPPost = SimplePost &
     Pick<
         ShortPostInfo,
         "md5" | "height" | "width" | "color" | "status" | "erotics" | "tags_count"
-    > & { alpha: boolean };
+    > & { alpha: boolean; ext: string };
 
 type APDataProvider = Omit<DataProvider<ShortPostInfo, SimpleAPPost>, "simplifyPost"> & {
     simplifyPost(post: ShortPostInfo): SimpleAPPost;

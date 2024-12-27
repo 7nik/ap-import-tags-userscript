@@ -31,6 +31,7 @@ module.exports = {
             ],
         },
     },
+    ignorePatterns: ["node_modules/**"],
     overrides: [
         {
             files: ["*.svelte"],

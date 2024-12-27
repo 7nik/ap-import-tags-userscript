@@ -4,6 +4,7 @@ import storage from "./storage.svelte";
 
 export default function search(provider: DataProvider<any, any>, query: string) {
     const state = $state({
+        result: null as SavedResult | null,
         progress: 0,
         link: "",
     });
@@ -31,6 +32,7 @@ export default function search(provider: DataProvider<any, any>, query: string) 
         }
 
         storage[`res_${result.date}`] = result;
+        state.result = result;
         state.progress = 1;
     })();
 
