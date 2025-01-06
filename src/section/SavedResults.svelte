@@ -1,63 +1,37 @@
 <script lang="ts">
-    import type { SavedResult } from "../libs/matcher.svelte";
+    import type { SavedResultMeta } from "../libs/matcher.svelte";
     import { Filter, Trash2 } from "lucide-svelte";
-    import APDataProvider from "../libs/providers/APDataProvider";
+    import filterer from "../libs/filterer.svelte";
+    import savedResults from "../libs/savedResults.svelte";
     import searcher from "../libs/searcher.svelte";
-    import localStorage from "../libs/storage.svelte";
     import Block from "../parts/Block.svelte";
     import TagsField from "../parts/TagsField.svelte";
 
-    const searches = $derived(
-        localStorage
-            .keys()
-            .sort()
-            .reverse()
-            .filter((name) => name.startsWith("res_"))
-            .map((name) => localStorage.get(name as any) as SavedResult),
-    );
-
-    let resultToFilter: SavedResult | null = $state(null);
+    let resultToFilter: SavedResultMeta | null = $state(null);
     let filterQuery = $state("");
     let filter: ReturnType<typeof searcher> | null = $state(null);
 
-    function deleteResult(search: SavedResult) {
-        localStorage.delete(`res_${search.date}`);
-    }
-
     function filterResult() {
-        if (!resultToFilter) return;
-
-        filter = searcher(APDataProvider, filterQuery);
+        if (resultToFilter) {
+            filter = filterer(resultToFilter, filterQuery);
+        }
     }
     $effect(() => {
-        if (filter?.result) {
-            if (!resultToFilter) {
-                filter = null;
-                return;
-            }
-            const ids = new Set(filter.result!.results.map((res) => res.result.id));
-            const newResult: SavedResult = {
-                providerName: resultToFilter.providerName,
-                query: `${resultToFilter.query} +F: ${filterQuery}`,
-                date: Date.now(),
-                results: resultToFilter.results.filter((res) => ids.has(res.result.id)),
-            };
-            localStorage[`res_${newResult.date}`] = newResult;
+        if (filter?.progress === 1) {
             resultToFilter = null;
-            deleteResult(filter.result);
             filter = null;
         }
     });
 </script>
 
 <Block title="Previous results">
-    {#each searches as search}
+    {#each savedResults.list() as search}
         <div>
             <a href="#/res/{search.date}/0">{search.providerName}: {search.query}</a>
             <Trash2
                 size="18"
                 cursor="pointer"
-                onclick={() => deleteResult(search)}
+                onclick={() => savedResults.delete(search)}
             />
             <Filter
                 size="18"
@@ -68,8 +42,8 @@
                 }}
             />
             <br />
-            {search.results.length}
-            {search.results[0]?.source ? "matched" : "found"}
+            {search.size}
+            {search.type === "matching" ? "matched" : "found"}
             pictures on
             {new Date(search.date).toLocaleString()},
         </div>

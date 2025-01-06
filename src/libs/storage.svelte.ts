@@ -1,11 +1,11 @@
-import type { SavedResult } from "./matcher.svelte";
+import type { SavedResultMeta } from "./matcher.svelte";
 import type { PostSize } from "./providers";
 import { tick, untrack } from "svelte";
 
 const PREFIX = "AP_tag_importer_";
 
 type LocalData = {
-    // api thins
+    // api things
     dbkey: string;
     snapikey: string;
     // settings
@@ -15,7 +15,7 @@ type LocalData = {
     isModerator: boolean;
     [k: `ma_${string}`]: { addTags: string; removeTags: string };
     // search results
-    [k: `res_${string}`]: SavedResult;
+    results: Record<string, SavedResultMeta>;
 };
 
 const cache: Partial<LocalData> = $state({});

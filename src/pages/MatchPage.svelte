@@ -67,7 +67,7 @@
     {/if}
     <span>{matcher.state.status}</span>
     <progress
-        max="100"
+        max="1"
         value={matcher.state.progress}
     ></progress>
     <center>

@@ -2,7 +2,7 @@
     import { CircleHelp } from "lucide-svelte";
     import { push } from "svelte-spa-router";
     import dataProviders from "../libs/providers";
-    import localStorage from "../libs/storage.svelte";
+    import storage from "../libs/storage.svelte";
     import Block from "../parts/Block.svelte";
     import TagsField from "../parts/TagsField.svelte";
 
@@ -43,14 +43,14 @@
         <input
             type="text"
             placeholder="Danbooru login, space, API key (desired)"
-            bind:value={localStorage.dbkey}
+            bind:value={storage.dbkey}
             pattern={`.+ \\w{24}`}
         />
         <span>SauceNAO key:</span>
         <input
             type="text"
             placeholder="SauceNAO API key (optional)"
-            bind:value={localStorage.snapikey}
+            bind:value={storage.snapikey}
             pattern={`[0-9a-f]{40}`}
         />
         <input

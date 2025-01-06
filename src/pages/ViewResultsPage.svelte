@@ -1,8 +1,7 @@
 <script lang="ts">
-    import type { SavedResult } from "../libs/matcher.svelte";
-    import { GM } from "$";
-    import { mount, onDestroy, unmount } from "svelte";
+    import type { SavedResult, SavedResultMeta } from "../libs/matcher.svelte";
     import dataProviders from "../libs/providers";
+    import savedResults from "../libs/savedResults.svelte";
     import storage from "../libs/storage.svelte";
     import APPost from "../parts/APPost.svelte";
     import BasePost from "../parts/BasePost.svelte";
@@ -12,29 +11,26 @@
 
     const { params }: { params: { name: string; page: number } } = $props();
 
-    const search: SavedResult = storage[`res_${params.name}`] ?? ({ results: [] } as any);
-    const dataProvider = dataProviders[search.providerName];
+    const meta: SavedResultMeta = storage.results?.[params.name] ?? ({ results: [] } as any);
+    const dataProvider = dataProviders[meta.providerName];
     const baseUrl = `#/res/${params.name}/`;
 
     const currPage = $derived(+params.page);
     const pageSize = $derived(storage.pageSize ?? 20);
-    const pageCount = $derived(Math.ceil(search.results.length / pageSize));
-    const posts = $derived(search.results.slice(currPage * pageSize, (currPage + 1) * pageSize));
+    const pageCount = $derived(Math.ceil(meta.size / pageSize));
+    const hasSource = meta.type === "matching";
 
-    const hasSource = search.results.every((r) => r.source);
+    let search: SavedResult | null = $state(null);
+    $effect(() => {
+        savedResults.get(params.name).then((res) => {
+            search = res!;
+        });
+    });
+    const posts = $derived.by(
+        () => search?.results.slice(currPage * pageSize, (currPage + 1) * pageSize) ?? [],
+    );
 
-    const multiAction = mount(MultiAction, {
-        target: document.getElementById("sidebar") ?? document.body,
-        anchor: document.querySelector("#sidebar>.quick_search") ?? undefined,
-    });
-    onDestroy(() => {
-        unmount(multiAction);
-    });
-    GM.addStyle(`
-        .sidebar_block + .quick_search {
-            display: none;
-        }
-    `);
+    let multiAction: ReturnType<typeof MultiAction> | null = $state(null);
 
     function reply(ev: MessageEvent) {
         if (ev.data.cmd !== "get_posts_data") return;
@@ -56,33 +52,41 @@
 
 <svelte:window onmessage={reply} />
 <header>
-    {search.providerName}: {search.query} <a href="#/home">&lt; Go back</a>
-    <br />
-    {#if search.results[0]?.sim}
-        <label>
-            <input
-                type="checkbox"
-                bind:checked={storage.showSource}
-            />
-            show the source image,
-        </label>
-    {/if}
-    post size:
-    <select bind:value={storage.postSize}>
-        <option label="small">150</option>
-        <option label="medium">300</option>
-        <option label="big">500</option>
-        <option label="large">800</option>
-    </select>
-    <div class="header">
-        Search results: {search.results.length} pictures
-    </div>
+    <section>
+        {meta.providerName}: {meta.query} <a href="#/home">&lt; Go back</a>
+        <br />
+        {#if hasSource}
+            <label>
+                <input
+                    type="checkbox"
+                    bind:checked={storage.showSource}
+                />
+                show the source image,
+            </label>
+        {/if}
+        post size:
+        <select bind:value={storage.postSize}>
+            <option label="small">150</option>
+            <option label="medium">300</option>
+            <option label="big">500</option>
+            <option label="large">800</option>
+        </select>
+        <div>
+            Search results: {meta.size} pictures
+        </div>
+    </section>
+    <section>
+        <PageNavigator
+            {baseUrl}
+            {currPage}
+            {pageCount}
+            showFastNavigator
+        />
+    </section>
+    <section>
+        <MultiAction bind:this={multiAction} />
+    </section>
 </header>
-<PageNavigator
-    {baseUrl}
-    {currPage}
-    {pageCount}
-/>
 <div
     class="posts"
     style:--post-size="{storage.postSize === "800" ? 720 : storage.postSize}px"
@@ -94,7 +98,7 @@
                 {multiAction}
                 {dataProvider}
             />
-        {:else if hasSource || search.providerName === "AnimePictures"}
+        {:else if hasSource || meta.providerName === "AnimePictures"}
             <APPost
                 post={post.result}
                 {multiAction}
@@ -107,21 +111,21 @@
         {/if}
     {/each}
 </div>
-<PageNavigator
-    {baseUrl}
-    {currPage}
-    {pageCount}
-    showFastNavigator
-/>
 
 <style>
+    :global(.body-wrapper > .content.alt) {
+        height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+    }
     header {
         padding: 10px;
-    }
-    .header {
-        margin-top: -4px;
+        display: grid;
+        grid-template-columns: 680px auto 680px;
+        justify-content: space-between;
     }
     .posts {
         text-align: center;
+        overflow: auto;
     }
 </style>

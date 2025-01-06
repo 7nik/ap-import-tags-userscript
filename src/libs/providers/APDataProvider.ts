@@ -45,7 +45,7 @@ function convertQuery(query: string) {
 const dataProvider: APDataProvider = {
     sourceName: "AnimePictures",
     authType: Auth.desired,
-    helpInfo: `Prefix tags with "-" exclude them from search results`,
+    helpInfo: `Prefix tags with "-" to exclude them from search results`,
     tagPrefixes: ["-"],
     async postCount(query) {
         const res = await AP.searchPosts(0, convertQuery(query));

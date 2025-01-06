@@ -60,7 +60,7 @@
 <svelte:window on:keydown={switchMode} />
 
 <Block
-    title="Multiaction"
+    title="MultiAction"
     hint="
 Click a post to apply the selected action to it.
 Use numerical and Esc keys to switch between actions.
@@ -96,13 +96,11 @@ Use numerical and Esc keys to switch between actions.
 </Block>
 
 <style>
-    select,
-    .break {
+    select {
         margin-top: 10px;
     }
-    :global(#sidebar):has(.ma-select) {
-        align-self: flex-start;
-        position: sticky;
-        top: 0;
+    .break {
+        display: inline-block;
+        width: 10px;
     }
 </style>

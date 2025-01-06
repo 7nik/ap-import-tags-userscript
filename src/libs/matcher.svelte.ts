@@ -3,7 +3,7 @@ import type { FoundPost, DataProvider, SimplePost } from "./providers/DataProvid
 import AP from "./net/AnimePictures";
 import SN from "./net/SauceNAO";
 import APPostProvider from "./providers/APDataProvider";
-import storage from "./storage.svelte";
+import savedResults from "./savedResults.svelte";
 import { localTime, percent } from "./utils.svelte";
 
 type State = {
@@ -27,7 +27,14 @@ type SavedResult = {
     date: number;
     results: Result[];
 };
-export type { State, Result, SavedResult };
+type SavedResultMeta = {
+    providerName: string;
+    query: string;
+    date: number;
+    size: number;
+    type: "matching" | "viewing";
+};
+export type { State, Result, SavedResult, SavedResultMeta };
 
 /**
  * Class to take pics on an image board and find the most similar on Anime-pictures using SauceNAO
@@ -89,14 +96,14 @@ export default class Matcher<
                 results: this.results,
                 date: Date.now(),
             };
-            storage[`res_${res.date}`] = res;
+            savedResults.add(res);
             this.state.paused = true;
             this.state.finished = true;
             return;
         }
 
         const { post, progress } = this.#foundPost.value;
-        this.state.progress = progress * 100;
+        this.state.progress = progress;
         this.state.eta = (Date.now() - this.#started) / progress + this.#started;
         this.state.status = `${percent(progress)}%: post №${post.id}, ETA: ${localTime(
             this.state.eta,
