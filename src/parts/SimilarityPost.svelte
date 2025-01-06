@@ -31,17 +31,13 @@
     const dbImg = $derived.by(getImage(() => dataProvider.getImage(post.source, size)));
     const lang = siteLang();
 
-    let pending = $state(false);
+    let pending = $state(0);
     function handleClick(ev: MouseEvent) {
-        if (pending) {
-            ev.preventDefault();
-            return;
-        }
         if (multiAction.isEnabled()) {
             ev.preventDefault();
-            pending = true;
+            pending += 1;
             multiAction.applyTo(result.id).finally(() => {
-                pending = false;
+                pending -= 1;
             });
         }
     }

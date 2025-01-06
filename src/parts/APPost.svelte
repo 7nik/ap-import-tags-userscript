@@ -18,17 +18,13 @@
     const imgFull = $derived(APPostProvider.getImage(post, "orig"));
     const lang = siteLang();
 
-    let pending = $state(false);
+    let pending = $state(0);
     function handleClick(ev: MouseEvent) {
-        if (pending) {
-            ev.preventDefault();
-            return;
-        }
         if (multiAction.isEnabled()) {
             ev.preventDefault();
-            pending = true;
+            pending += 1;
             multiAction.applyTo(post.id).finally(() => {
-                pending = false;
+                pending -= 1;
             });
         }
     }
