@@ -31,26 +31,8 @@
     );
 
     let multiAction: ReturnType<typeof MultiAction> | null = $state(null);
-
-    function reply(ev: MessageEvent) {
-        if (ev.data.cmd !== "get_posts_data") return;
-        (ev.source as Window)?.postMessage(
-            {
-                cmd: "posts_data",
-                postsData: {
-                    query: null,
-                    page: 0,
-                    lastPage: 0,
-                    postIds: posts.map((post) => post.result.id),
-                    lastPost: posts.length - 1,
-                },
-            },
-            window.location.origin,
-        );
-    }
 </script>
 
-<svelte:window onmessage={reply} />
 <header>
     <section>
         {meta.providerName}: {meta.query} <a href="#/home">&lt; Go back</a>
