@@ -1,3 +1,4 @@
+import { monkeyWindow } from "$";
 import { mount, unmount } from "svelte";
 import App from "./App.svelte";
 
@@ -29,12 +30,11 @@ setInterval(() => {
 function startApp() {
     const content = document.querySelector(".content");
     if (!content) {
-        console.error("No element to mount the App");
+        // eslint-disable-next-line no-alert
+        alert("No element to mount the App");
         return;
     }
-    for (const elem of content.children) {
-        (elem as HTMLElement).style.display = "none";
-    }
+    content.classList.add("alt");
 
     stop?.();
     const app = mount(App, {
@@ -42,28 +42,16 @@ function startApp() {
     });
     stop = () => {
         unmount(app);
-        for (const elem of content.children) {
-            (elem as HTMLElement).style.display = "";
-        }
+        content.classList.remove("alt");
     };
 }
 
-// https://github.com/sveltejs/kit/issues/2588 in SK below v1.181
-// no hashchange event when only hash changes
-window.addEventListener(
-    "click",
-    (ev) => {
-        const isRootLink = !!(ev.target as HTMLElement).closest("a[href='/']");
-        if (isRootLink && stop) {
-            stop();
-            stop = null;
-        }
-    },
-    { capture: true },
-);
+if (window.location.hash.startsWith("#/") || window.location.href.endsWith("#")) {
+    startApp();
+}
 
-window.addEventListener("hashchange", () => {
-    const hasHash = window.location.hash || window.location.href.endsWith("#");
+monkeyWindow.addEventListener("urlchange", () => {
+    const hasHash = window.location.hash.startsWith("#/") || window.location.href.endsWith("#");
     if (hasHash && !stop) {
         startApp();
     } else if (!hasHash && stop) {

@@ -23,4 +23,13 @@
     };
 </script>
 
-<Router {routes} />
+<Router
+    {routes}
+    restoreScrollState={true}
+/>
+
+<style>
+    :global(.content.alt > main) {
+        display: none;
+    }
+</style>
