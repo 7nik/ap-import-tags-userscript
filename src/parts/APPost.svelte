@@ -19,13 +19,18 @@
     const lang = siteLang();
 
     let pending = $state(0);
-    function handleClick(ev: MouseEvent) {
+    async function handleClick(ev: MouseEvent) {
         if (multiAction.isEnabled()) {
             ev.preventDefault();
             pending += 1;
-            multiAction.applyTo(post.id).finally(() => {
+            try {
+                await multiAction.applyTo(post.id);
+            } catch {
+                // eslint-disable-next-line no-alert
+                alert(`Failed to apply to post #${post.id}`);
+            } finally {
                 pending -= 1;
-            });
+            }
         }
     }
 </script>
