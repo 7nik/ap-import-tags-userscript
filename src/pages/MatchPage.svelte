@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { replace } from "svelte-spa-router";
+    import { push, replace } from "svelte-spa-router";
     import PostMatcher from "../libs/matcher.svelte";
     import dataProviders from "../libs/providers";
     import Block from "../parts/Block.svelte";
@@ -35,6 +35,8 @@
                 )
             ) {
                 matcher.resume(repeat, true);
+            } else if (matcher.state.progress === 0) {
+                push("/home");
             }
         } catch (ex) {
             console.error(ex);
@@ -47,7 +49,7 @@
         // eslint-disable-next-line no-restricted-globals, no-alert
         if (confirm("Are you sure that you want cancel matching? All progress will be lost!")) {
             matcher.pause();
-            replace("/home");
+            push("/home");
         }
     }
 
