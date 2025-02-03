@@ -404,22 +404,28 @@ const AnimePicturesDirect = {
 /**
  * Ensure we do not hit the request limit
  */
-const LIMIT = 90; // left 30 req/min for other things
+const MINUTE = 60_000;
+const LIMIT = 100; // left 20 req/min for other things
 let used = 0;
-let nextTime = Promise.resolve();
+let next: Promise<any> = Promise.resolve();
 const AnimePictures = new Proxy(AnimePicturesDirect, {
     get(_, prop) {
         const fn = AnimePicturesDirect[prop as keyof typeof AnimePicturesDirect];
         return async (...args: any[]) => {
-            await nextTime;
-            const ratio = used / LIMIT;
-            // sigmoid function
-            nextTime = sleep(60_000 / (1 + Math.exp(10 - 20 * ratio)));
+            const prev = next;
+            const { promise, resolve } = Promise.withResolvers();
+            next = promise;
+            await prev;
+
             used += 1;
-            sleep(60_000).then(() => {
+            sleep(MINUTE).then(() => {
                 used -= 1;
             });
-            return Reflect.apply(fn, AnimePictures, args);
+            const result = Reflect.apply(fn, AnimePictures, args);
+
+            const delay = sleep(used >= LIMIT ? MINUTE : ((used / LIMIT) * 2 * MINUTE) / LIMIT);
+            Promise.allSettled([result, delay]).then(resolve);
+            return result;
         };
     },
 });
