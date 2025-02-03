@@ -23,13 +23,18 @@
     };
 </script>
 
-<Router
-    {routes}
-    restoreScrollState={true}
-/>
+<div class="tagging-tools">
+    <Router
+        {routes}
+        restoreScrollState={true}
+    />
+</div>
 
 <style>
-    :global(.content.alt > main) {
+    .tagging-tools + :global(.content) {
         display: none;
+    }
+    .tagging-tools ~ :global(#sidebar) {
+        max-height: calc(100vh - 40px);
     }
 </style>
