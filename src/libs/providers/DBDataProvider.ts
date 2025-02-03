@@ -1,7 +1,7 @@
 import DB, { type PostInfo, TagCategory as DBCategory } from "../net/Danbooru";
 import { type DataProvider, Auth, type SimplePost, TagCategory } from "./DataProvider";
 
-type DBPost = SimplePost & { orig: string };
+type DBPost = SimplePost & { md5: string; ext: string; orig: string };
 
 const TAG_CATEGORY: Record<DBCategory, TagCategory> = {
     [DBCategory.artist]: TagCategory.artist,
@@ -13,7 +13,7 @@ const TAG_CATEGORY: Record<DBCategory, TagCategory> = {
 
 function convertQuery(query: string) {
     // assume it's already in danbooru's format
-    if (query.includes("_")) return query;
+    if (query.includes("_") && !query.includes(",")) return query;
     return query
         .split(",")
         .map((q) => q.trim().replaceAll(" ", "_"))
