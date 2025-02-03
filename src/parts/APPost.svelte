@@ -55,7 +55,10 @@
             ></video>
         {:else}
             <!-- svelte-ignore a11y_missing_attribute -->
-            <img src={imgThumb} />
+            <img
+                src={imgThumb}
+                draggable={multiAction.isEnabled() ? "false" : "true"}
+            />
         {/if}
     </a>
     <div

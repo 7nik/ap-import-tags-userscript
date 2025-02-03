@@ -1,22 +1,32 @@
 <script lang="ts">
     import type { FullTag } from "../libs/net/AnimePictures";
+    import { untrack } from "svelte";
     import AP from "../libs/net/AnimePictures";
     import storage from "../libs/storage.svelte";
     import Block from "./Block.svelte";
     import TagsField from "./TagsField.svelte";
 
     const cache: Record<string, FullTag> = {};
-    let mode = $state("off");
-    const disabled = $derived(mode === "off");
-    const action = $derived(storage[`ma_${mode}`] ?? { addTags: "", removeTags: "" });
-
-    export const isEnabled = () => !disabled;
-    export const applyTo = async (postId: number) => {
-        if (action.addTags) {
-            await AP.addTags(action.addTags, postId);
+    let mode = $state("");
+    const action = $derived.by(() => {
+        if (!mode) return null;
+        if (storage[`ma_${mode}`]) return storage[`ma_${mode}`];
+        const obj = $state({ addTags: "", removeTags: "" });
+        if (mode) {
+            untrack(() => {
+                storage[`ma_${mode}`] = obj;
+            });
         }
-        if (action.removeTags) {
-            const tags = action.removeTags
+        return obj;
+    });
+
+    export const isEnabled = () => !!action;
+    export const applyTo = async (postId: number) => {
+        if (action!.addTags) {
+            await AP.addTags!(action!.addTags, postId);
+        }
+        if (action!.removeTags) {
+            const tags = action!.removeTags
                 .split("||")
                 .map((name) => name.trim().toLocaleLowerCase())
                 .filter(Boolean);
@@ -50,10 +60,14 @@
             return;
         }
         if (ev.key === "Escape") {
-            mode = "off";
+            setMode("");
         } else if (/^\d$/.test(ev.key)) {
-            mode = ev.key;
+            setMode(ev.key);
         }
+    }
+
+    function setMode(m: string) {
+        mode = m;
     }
 </script>
 
@@ -70,7 +84,10 @@ Use numerical and Esc keys to switch between actions.
         bind:value={mode}
         class="ma-select"
     >
-        <option label="disabled">off</option>
+        <option
+            label="disabled"
+            value="">off</option
+        >
         <option label="action 1">1</option>
         <option label="action 2">2</option>
         <option label="action 3">3</option>
@@ -80,18 +97,32 @@ Use numerical and Esc keys to switch between actions.
         <option label="action 7">7</option>
         <option label="action 8">8</option>
         <option label="action 9">9</option>
+        <option
+            label="action 10"
+            value="0">10</option
+        >
     </select>
     <div class="break"></div>
     <TagsField
-        placeholder="tags to add"
-        bind:value={action.addTags}
-        {disabled}
-    />
-    <div class="break"></div>
-    <TagsField
         placeholder="tags to remove"
-        bind:value={action.removeTags}
-        {disabled}
+        bind:value={
+            () => action?.removeTags ?? "",
+            (v) => {
+                if (action) action.removeTags = v;
+            }
+        }
+        disabled={!action}
+    />
+    &nbsp;&rArr;&nbsp;
+    <TagsField
+        placeholder="tags to add"
+        bind:value={
+            () => action?.addTags ?? "",
+            (v) => {
+                if (action) action.addTags = v;
+            }
+        }
+        disabled={!action}
     />
 </Block>
 

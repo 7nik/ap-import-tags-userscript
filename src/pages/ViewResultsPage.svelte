@@ -31,71 +31,82 @@
     );
 
     let multiAction: ReturnType<typeof MultiAction> | null = $state(null);
+
+    function resetScroll(node: Element, _: any) {
+        return {
+            update() {
+                node.scrollTop = 0;
+            },
+        };
+    }
 </script>
 
-<header>
-    <section>
-        {meta.providerName}: {meta.query} <a href="#/home">&lt; Go back</a>
-        <br />
-        {#if hasSource}
-            <label>
-                <input
-                    type="checkbox"
-                    bind:checked={storage.showSource}
+<div class="content">
+    <header>
+        <section>
+            {meta.providerName}: {meta.query} <a href="#/home">&lt; Go back</a>
+            <br />
+            {#if hasSource}
+                <label>
+                    <input
+                        type="checkbox"
+                        bind:checked={storage.showSource}
+                    />
+                    show the source image,
+                </label>
+            {/if}
+            post size:
+            <select bind:value={storage.postSize}>
+                <option label="small">150</option>
+                <option label="medium">300</option>
+                <option label="big">500</option>
+                <option label="large">800</option>
+            </select>
+            <div>
+                Search results: {meta.size} pictures
+            </div>
+        </section>
+        <section>
+            <PageNavigator
+                {baseUrl}
+                {currPage}
+                {pageCount}
+                showFastNavigator
+            />
+        </section>
+        <section>
+            <MultiAction bind:this={multiAction} />
+        </section>
+    </header>
+    <div
+        class="posts"
+        style:--post-size="{storage.postSize === `800` ? 720 : storage.postSize}px"
+        use:resetScroll={posts}
+    >
+        {#each posts as post (post.result.id)}
+            {#if hasSource && storage.showSource}
+                <SimilarityPost
+                    {post}
+                    {multiAction}
+                    {dataProvider}
                 />
-                show the source image,
-            </label>
-        {/if}
-        post size:
-        <select bind:value={storage.postSize}>
-            <option label="small">150</option>
-            <option label="medium">300</option>
-            <option label="big">500</option>
-            <option label="large">800</option>
-        </select>
-        <div>
-            Search results: {meta.size} pictures
-        </div>
-    </section>
-    <section>
-        <PageNavigator
-            {baseUrl}
-            {currPage}
-            {pageCount}
-            showFastNavigator
-        />
-    </section>
-    <section>
-        <MultiAction bind:this={multiAction} />
-    </section>
-</header>
-<div
-    class="posts"
-    style:--post-size="{storage.postSize === "800" ? 720 : storage.postSize}px"
->
-    {#each posts as post (post.result.id)}
-        {#if hasSource && storage.showSource}
-            <SimilarityPost
-                {post}
-                {multiAction}
-                {dataProvider}
-            />
-        {:else if hasSource || meta.providerName === "AnimePictures"}
-            <APPost
-                post={post.result}
-                {multiAction}
-            />
-        {:else}
-            <BasePost
-                post={post.result}
-                {dataProvider}
-            />
-        {/if}
-    {/each}
+            {:else if hasSource || meta.providerName === "AnimePictures"}
+                <APPost
+                    post={post.result}
+                    {multiAction}
+                />
+            {:else}
+                <BasePost
+                    post={post.result}
+                    {dataProvider}
+                />
+            {/if}
+        {/each}
+    </div>
 </div>
 
 <style>
-    :global(.body-wrapper > .content.alt) {
+    .content {
         height: calc(100vh - 40px);
         display: flex;
         flex-direction: column;
